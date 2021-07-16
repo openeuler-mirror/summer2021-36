@@ -1,3 +1,4 @@
 [submodule "kernel"]
 	path = kernel
 	url = git@gitee.com:huangyizhitt/kernel.git
+	branch = openEuler-21.03
