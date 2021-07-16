@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -x
 
 #Install the software that the kernel depends on 
 
