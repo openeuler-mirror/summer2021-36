@@ -159,8 +159,6 @@ cd build
 cmake ..
 make 
 sudo make install
-cd ${CURRENT_DIR}/${ROCm_DIR}/${ROCM_SMI_LIB_DIR}
-sudo cp -r include/* ${ROCM_INSTALL_PATH}/include/
 
 cd ./tests/rocm_smi_test
 mkdir build
