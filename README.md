@@ -48,8 +48,12 @@ ROCclr 是一个虚拟设备接口，计算运行时与不同的后端（如 ROC
 HIP 是一种 C++ 运行时 API 和内核语言，允许开发人员从单一源代码为 AMD 和 NVIDIA GPU 创建便携式应用程序。HIP提供HIPCC编译器用于编译HIP C++代码，类似于NVIDIA的NVCC编译器。HIP可以等效支持有限的CUDA API，并可以通过工具hipify-perl将CUDA代码转换为HIP代码。
 
 ## 4. ROCm Libraries
+ROCm Libraries是ROCm提供的应用程序加速库。构建在HIP编程语言之上。 
 ### rocRand
 rocRand是ROCm的随机数库。它是利用HIP语言实现，并运行ROCm runtime之上。它能够等效支持cuRand库的函数
+
+### rocBlAS
+rocBlAS是ROCm的线性代数库，它依赖rocRand。
 
 以移植的ROCm Project和其中的软件包的对应依赖关系如图：
 
@@ -237,6 +241,76 @@ cd build
 cmake ..
 make
 ```
+
+### 11）rocRand
+```
+git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git -b rocm-4.2.x
+cd rocRAND
+mkdir build && cd build
+CXX=hipcc CXXFLAGS=--rocm-path=/opt/rocm cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=gfx803 -DCMAKE_INSTALL_PATH=/opt/rocm ..
+make
+sudo make install
+```
+注意：<font color="red">AMDGPU_TARGETS中应选取自己AMD GPU对应架构，不修改的话默认采用gfx900;gfx906;gfx908</font>
+
+### 12）rocBLAS
+```
+git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b rocm-4.2.x
+
+```
+
+# 单元测试
+用于测试软件包移植的正确性。单元测试均为官方单元测试。
+
+## 1. ROCT单元测试
+ROCT单元测试主要用于在用户层测试ROCm的驱动代码和ROCT代码。在test文件夹下有三大测试类，当前项目仅使用kfdtest，测试kfd驱动的正确性和接口代码的正确性。编译和使用方式如下：
+```
+sudo yum install libdrm-devel libdrm_amdgpu-devel libhsakmt-devel
+cd ROCT-Thunk-Interface/test
+mkdir build && cd build
+cmake ..
+make
+./run_kfdtest.sh
+```
+共14个test cases，83个tests，测试成功如下图所示
+![avatar](image/kfdtest.png)
+
+## 2. rocm_smi_lib单元测试
+rocm_smi_lib单元测试主要测试rocm_smi对GPU硬件的管理和信息获取，编译与使用如下
+```
+sudo ln -s /opt/rocm/rocm_smi/include/rocm_smi ./rocm_smi
+cd rocm_smi_lib/tests/rocm_smi_test
+mkdir build && cd build
+cmake -DROCM_DIR=/opt/rocm ..
+make
+sudo ./rsmitst64
+```
+rocm_smi_lib单元测试主要测提供2个test cases，32个tests，本项目使用的GPU的测试如图
+![avatar](image/rocm_smi_test.png)
+
+# 应用测试
+ROCm应用程序的测试，验证应用程序的有效性
+
+## 1. rocminfo
+编译完成rocminfo后会在build目录下产生rocminfo的elf可执行文件。运行完，将会显示HSA信息（包括HSA、CPU、AMD GPU、ISA信息），具体如下图所示：
+![avatar](image/rocminfo.png)
+
+## 2. rocm_smi_lib
+rocm_smi_lib提供一个定时GPU监控应用，rocm-smi（类似CUDA的nvidia-smi）。编译完成后，可以按如下方式执行
+```
+/opt/rocm/bin/rocm-smi
+```
+可以获取如图GPU信息
+![avatar](image/rocm-smi.png)
+
+## 3. rocm_bandwidth_test
+rocm_bandwidth_test提供一个测试CPU-GPU之间带宽的工具rocm-bandwidth-test。编译完成后再build目录下生成。
+```
+cd rocm_bandwidth_test/build
+./rocm-bandwidth-test
+```
+可以获得CPU-CPU（numa），GPU-GPU，GPU-CPU，CPU-GPU之间的带宽，具体如图：
+![avatar](image/rocm_bandwidth_test.png)
 
 #### 使用说明
 
