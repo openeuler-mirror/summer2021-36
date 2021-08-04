@@ -381,7 +381,7 @@ cd ROCmValidationSuite/build/bin
 sudo ./rvsqa.new.sh
 ```
 测试结果如下图所示：
-
+![avatar](image/rvs.png)
 
 #### 使用说明
 
