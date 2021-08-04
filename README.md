@@ -114,10 +114,10 @@ chmod a+x ~/.bin/repo
 
 mkdir -p ~/ROCm/
 cd ~/ROCm/
-~/bin/repo init -u https://github.com/RadeonOpenCompute/ROCm.git -b roc-4.2.x --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
+~/.bin/repo init -u https://gitee.com/huangyizhitt/ROCm.git -b roc-4.2.x --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
 repo sync
 ```
-整包下载通常会面临github网络问题，中断下载，因此，大多数情况下请按照1）~n）进行分包下载
+本项目已经把ROCm仓库的地址重定向到github镜像https://github.com.cnpmjs.org/ 上，以加速整包下载速度。
 
 ### 1) ROCT-Thunk-Interface
 
