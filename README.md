@@ -106,6 +106,18 @@ sudo make install
 
 ### ROCm软件编译与安装
 尽管ROCm软件按Project进行分组，但是，部分软件存在依赖关系，因此，按照以下步骤进行分步编译安装。建议在workspace中建立一个总体目录ROCm，将每个git下来的软件仓库都存在ROCm下。
+### 0) 获取完整ROCm
+```
+mkdir -p ~/.bin/
+curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+chmod a+x ~/.bin/repo
+
+mkdir -p ~/ROCm/
+cd ~/ROCm/
+~/bin/repo init -u https://github.com/RadeonOpenCompute/ROCm.git -b roc-4.2.x --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
+repo sync
+```
+整包下载通常会面临github网络问题，中断下载，因此，大多数情况下请按照1）~n）进行分包下载
 
 ### 1) ROCT-Thunk-Interface
 
@@ -116,13 +128,14 @@ sudo yum install cmake numactl-devel rpm-build
 
 #### 编译安装软件包
 ```
-git clone https://github.com/RadeonOpenCompute/ROCT-Thunk-Interface.git -b roc-4.2.x
+git clone https://github.com/RadeonOpenCompute/ROCT-Thunk-Interface.git -b rocm-4.2.0
 cd ROCT-Thunk-Interface
 mkdir build
 cd build
 cmake ..
 make
 sudo make install
+sudo cp /opt/rocm/lib64/libhsakmt.so /opt/rocm/lib      //编译ROCmValidationSuite时，会从lib下找libhsakmt.so进行链接
 ```
 默认会安装在/opt/rocm目录下（推荐），可以在cmake时用CMAKE_INSTALL_PREFIX定义自定义路径。
 ```
@@ -131,7 +144,7 @@ cmake -DCMAKE_INSTALL_PREFIX="自定义路径" ..
 
 ### 2) llvm-project
 ```
-git clone git@github.com:RadeonOpenCompute/llvm-project.git -b rocm-4.2.x
+git clone git@github.com:RadeonOpenCompute/llvm-project.git -b rocm-4.2.0
 cd llvm-project
 mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/opt/rocm/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=1 -DLLVM_TARGETS_TO_BUILD="AMDGPU;X86" -DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt;libclc;libcxx;libcxxabi;openmp;parallel-libs" ../llvm
@@ -150,7 +163,7 @@ sudo swapon swapfile
 
 ### 3）ROCm-Device-Libs
 ```
-git clone https://github.com/RadeonOpenCompute/ROCm-Device-Libs.git -b rocm-4.2.x
+git clone https://github.com/RadeonOpenCompute/ROCm-Device-Libs.git -b rocm-4.2.0
 cd ROCm-Device-Libs
 mkdir build && cd build
 CC=/opt/rocm/llvm/bin/clang CXX=/opt/rocm/llvm/bin/clang++ cmake -DLLVM_DIR=/opt/rocm/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_WERROR=1 -DLLVM_ENABLE_ASSERTIONS=1 -DCMAKE_INSTALL_PREFIX=/opt/rocm ..
@@ -170,7 +183,7 @@ sudo make install
 
 ### 5）ROCm-CompilerSupport
 ```
-git clone https://github.com/RadeonOpenCompute/ROCm-CompilerSupport -b roc-4.2.x
+git clone https://github.com/RadeonOpenCompute/ROCm-CompilerSupport -b rocm-4.2.0
 cd ROCm-CompilerSupport/lib/comgr
 mkdir build && cd build
 export LLVM_PROJECT=/opt/rocm/llvm
@@ -180,14 +193,24 @@ make
 sudo make install
 ```
 
-### 6）ROCclr
+### 6）rocm-cmake
+```
+git clone https://github.com/RadeonOpenCompute/rocm-cmake -b rocm-4.2.0
+cd rocm-cmake
+mkdir build
+cd build
+cmake ..
+sudo cmake --build . --target install
+```
+
+### 7）ROCclr
 #### 安装依赖
 ```
 sudo yum install mesa-libGL-devel mesa-libGLU-devel
 ```
 #### 编译安装软件
 ```
-git clone https://github.com/ROCm-Developer-Tools/ROCclr -b rocm-4.2.x
+git clone https://github.com/ROCm-Developer-Tools/ROCclr -b rocm-4.2.0
 git clone https://github.com/RadeonOpenCompute/ROCm-OpenCL-Runtime.git -b rocm-4.2.x
 
 export ROCclr_DIR="$(readlink -f ROCclr)"
@@ -200,9 +223,9 @@ make
 sudo make install
 ```
 
-### 7）HIP
+### 8）HIP
 ```
-git clone https://github.com/ROCm-Developer-Tools/HIP -b rocm-4.2.x
+git clone https://github.com/ROCm-Developer-Tools/HIP -b rocm-4.2.0
 export HIP_DIR="$(readlink -f HIP)"
 cd HIP
 mkdir -p build && cd build
@@ -210,8 +233,16 @@ cmake -DCMAKE_PREFIX_PATH="$ROCclr_DIR/build;/opt/rocm/" -DCMAKE_INSTALL_PREFIX=
 make
 sudo make install
 ```
+安装完成后，为了一劳永逸的解决--rocm-path问题，可以对hipcc编辑，为其添加为默认编译选项：
+```
+sudo /opt/rocm/hip/bin/hipcc
+在文件中加入:
+$HIPCXXFLAGS .= " --rocm-path=/opt/rocm";
+$HIPCFLAGS .= " --rocm-path=/opt/rocm";
+$HIPLDFLAGS .= " --rocm-path=/opt/rocm";
+```
 
-### 8）rocminfo
+### 9）rocminfo
 ```
 git clone https://github.com/RadeonOpenCompute/rocminfo.git
 cd rocminfo
@@ -221,9 +252,9 @@ cmake -DCMAKE_PREFIX_PATH=/opt/rocm ..
 make
 ```
 
-#### 9）rocm_smi_lib
+#### 10）rocm_smi_lib
 ```
-git clone https://github.com/RadeonOpenCompute/rocm_smi_lib.git -b roc-4.2.x
+git clone https://github.com/RadeonOpenCompute/rocm_smi_lib.git -b rocm-4.2.0
 cd rocm_smi_lib
 mkdir build
 cd build
@@ -232,7 +263,7 @@ make
 sudo make install
 ```
 
-### 10）rocm_bandwidth_test
+### 11）rocm_bandwidth_test
 ```
 git clone https://github.com/RadeonOpenCompute/rocm_bandwidth_test.git
 cd rocm_bandwidth_test
@@ -242,9 +273,9 @@ cmake ..
 make
 ```
 
-### 11）rocRand
+### 12）rocRand
 ```
-git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git -b rocm-4.2.x
+git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git -b rocm-4.2.0
 cd rocRAND
 mkdir build && cd build
 CXX=hipcc CXXFLAGS=--rocm-path=/opt/rocm cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=gfx803 -DCMAKE_INSTALL_PATH=/opt/rocm ..
@@ -253,10 +284,41 @@ sudo make install
 ```
 注意：<font color="red">AMDGPU_TARGETS中应选取自己AMD GPU对应架构，不修改的话默认采用gfx900;gfx906;gfx908</font>
 
-### 12）rocBLAS
+### 13）rocBLAS
+rocBLAS的install.sh目前仅支持少数几个操作系统，<font color="red">必须使用本项目提供的install.sh</font>，或自行修改install.sh操作系统支持部分代码，才能在OpenEuler上进行编译安装。另外，rocBLAS依赖的rocm-cmake、Tensile、libmsgpack等软件包，在执行install.sh过程中，会自动从github上进行下载安装。如果连接github不顺利，我们建议手动安装rocm-cmake（6），然后使用本项目修改后的CMakeLists.txt文件。该文件将下载链接重定向到了gitee上，使用本项目fork的Tensile，另外还添加编译选项--rocm-path=/opt/rocm。具体编译安装方式如下，会经历相当长的一段编译时间：
 ```
-git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b rocm-4.2.x
+// Install libboost and libmsgpack
+sudo yum install boost-devel
+git clone https://github.com/msgpack/msgpack-c.git
+cd msgpack-c
+git checkout c_master
+cmake .
+make
+sudo make install
 
+git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b rocm-4.2.0
+cp summer2021-36/rocm/rocBLAS/install.sh rocBLAS/                       
+cp summer2021-36/rocm/rocBLAS/CMakeLists.txt rocBLAS/
+cd rocBLAS
+./install.sh
+sudo cp -rf build/release/rocblas-install/rocblas/include/* /opt/rocm/include
+sudo cp -rf build/release/rocblas-install/rocblas/lib/* /opt/rocm/lib
+```
+
+### 14）ROCmValidationSuite
+```
+sudo yum install doxygen pciutils-devel
+git clone https://github.com/ROCm-Developer-Tools/ROCmValidationSuite.git -b rocm-4.2.0
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeLists.txt ROCmValidationSuite/                       
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeYamlDownload.cmake ROCmValidationSuite/
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeGtestDownload.cmake ROCmValidationSuite/
+cd ROCmValidationSuite
+mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh         
+mkdir build
+cmake -DROCM_PATH=/opt/rocm -DCMAKE_INSTALL_PREFIX=/opt/rocm -DCMAKE_PACKAGING_INSTALL_PREFIX=/opt/rocm ..
+make
+sudo make install
+make package    //编译出rpm包
 ```
 
 # 单元测试
@@ -311,6 +373,15 @@ cd rocm_bandwidth_test/build
 ```
 可以获得CPU-CPU（numa），GPU-GPU，GPU-CPU，CPU-GPU之间的带宽，具体如图：
 ![avatar](image/rocm_bandwidth_test.png)
+
+## 4. ROCmValidationSuite
+ROCmValidationSuite编译完成后，会产生一个rvs全局测试脚本，会把全部功能测试一次，按如下执行
+```
+cd ROCmValidationSuite/build/bin
+sudo ./rvsqa.new.sh
+```
+测试结果如下图所示：
+
 
 #### 使用说明
 

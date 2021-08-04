@@ -8,6 +8,7 @@ sudo yum install bc gcc-c++ kernel-devel pkg-config glibc bison flex elfutils-li
 CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 ROCm_DIR=${CURRENT_DIR}/ROCm
 ROCM_INSTALL_PATH=/opt/rocm
+ROCm_VER=rocm-4.2.0
 #Compile the kernel 
 cd kernel
 make mrproper
@@ -26,7 +27,7 @@ cd ${ROCm_DIR}
 ROCT_DIR=ROCT-Thunk-Interface
 while (!(test -d ${ROCT_DIR}) )
 do
-        git clone https://github.com/RadeonOpenCompute/ROCT-Thunk-Interface.git -b roc-4.2.x
+        git clone https://github.com/RadeonOpenCompute/ROCT-Thunk-Interface.git -b ${ROCm_VER}
 done
 cd ${ROCT_DIR}
 mkdir build
@@ -49,7 +50,7 @@ cd ${ROCm_DIR}
 LLVM_PROJ=llvm-project
 while (!(test -d ${LLVM_PROJ}))
 do
-	git clone git@github.com:RadeonOpenCompute/llvm-project.git -b rocm-4.2.x
+	git clone git@github.com:RadeonOpenCompute/llvm-project.git -b ${ROCm_VER}
 done
 cd ${LLVM_PROJ}
 LLVM_PROJECT=${ROCM_INSTALL_PATH}/llvm
@@ -63,7 +64,7 @@ cd ${ROCm_DIR}
 ROCM_DEV_LIBS=ROCm-Device-Libs
 while (!(test -d ${ROCM_DEV_LIBS}))
 do
-	git clone https://github.com/RadeonOpenCompute/ROCm-Device-Libs.git -b rocm-4.2.x
+	git clone https://github.com/RadeonOpenCompute/ROCm-Device-Libs.git -b ${ROCm_VER}
 done
 cd ${ROCM_DEV_LIBS}
 mkdir build && cd build
@@ -77,7 +78,7 @@ cd ${ROCm_DIR}
 ROCR=ROCR-Runtime
 while (!(test -d ${ROCR}))
 do
-	git clone https://github.com/RadeonOpenCompute/ROCR-Runtime.git -b rocm-4.2.x
+	git clone https://github.com/RadeonOpenCompute/ROCR-Runtime.git -b ${ROCm_VER}
 done
 cd ${ROCR}
 mkdir build && cd build
@@ -85,12 +86,24 @@ cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
 make
 sudo make install
 
+#Compile rocm-cmake
+cd ${ROCm_DIR}
+ROCM_CMAKE=rocm-cmake
+while (!(test -d ${ROCM_CMAKE}))
+do
+        git clone https://github.com/RadeonOpenCompute/rocm-cmake.git -b ${ROCm_VER}
+done
+cd ${ROCM_CMAKE}
+mkdir build && cd build
+cmake ..
+cmake --build . --target install
+
 #Compile and install ROCm-CompilerSupport
 cd ${ROCm_DIR} 
 CompilerSupport=ROCm-CompilerSupport
 while (!(test -d ${ROCm-CompilerSupport}))
 do
-	git clone https://github.com/RadeonOpenCompute/ROCm-CompilerSupport.git  -b roc-4.2.x
+	git clone https://github.com/RadeonOpenCompute/ROCm-CompilerSupport.git  -b ${ROCm_VER}
 done
 cd ROCm-CompilerSupport/lib/comgr
 mkdir build && cd build
@@ -103,12 +116,12 @@ cd ${ROCm_DIR}
 sudo yum install mesa-libGL-devel mesa-libGLU-devel
 while (!(test -d ROCclr))
 do
-        git clone https://github.com/ROCm-Developer-Tools/ROCclr -b rocm-4.2.x
+        git clone https://github.com/ROCm-Developer-Tools/ROCclr -b ${ROCm_VER}
 done
 
 while (!(test -d ROCm-OpenCL-Runtime))
 do 
-        git clone https://github.com/RadeonOpenCompute/ROCm-OpenCL-Runtime.git -b rocm-4.2.x
+        git clone https://github.com/RadeonOpenCompute/ROCm-OpenCL-Runtime.git -b ${ROCm_VER}
 done
 
 ROCclr_DIR="$(readlink -f ROCclr)"
@@ -123,7 +136,7 @@ sudo make install
 cd ${ROCm_DIR} 
 while (!(test -d HIP))
 do
-        git clone https://github.com/ROCm-Developer-Tools/HIP -b rocm-4.2.x
+        git clone https://github.com/ROCm-Developer-Tools/HIP -b ${ROCm_VER}
 done
 export HIP_DIR="$(readlink -f HIP)"
 cd ${HIP_DIR}
@@ -137,7 +150,7 @@ cd ${ROCm_DIR}
 ROCMINFO_DIR=rocminfo
 while (!(test -d ${ROCMINFO_DIR}) )
 do
-        git clone https://github.com/RadeonOpenCompute/rocminfo.git
+        git clone https://github.com/RadeonOpenCompute/rocminfo.git -b ${ROCm_VER}
 done
 cd ${ROCMINFO_DIR}
 mkdir build
@@ -151,7 +164,7 @@ cd ${ROCm_DIR}
 ROCM_SMI_LIB_DIR=rocm_smi_lib
 while (!(test -d ${ROCM_SMI_LIB_DIR}) )
 do
-        git clone https://github.com/RadeonOpenCompute/rocm_smi_lib.git -b roc-4.2.x
+        git clone https://github.com/RadeonOpenCompute/rocm_smi_lib.git -b ${ROCm_VER}
 done
 cd ${ROCM_SMI_LIB_DIR}
 mkdir build
@@ -172,7 +185,7 @@ cd ${ROCm_DIR}
 ROCM_BANDWIDTH_DIR=rocm_bandwidth_test
 while (!(test -d ${ROCM_BANDWIDTH_DIR}) )
 do
-        git clone https://github.com/RadeonOpenCompute/rocm_bandwidth_test.git
+        git clone https://github.com/RadeonOpenCompute/rocm_bandwidth_test.git -b ${ROCm_VER}
 done
 cd ${ROCM_BANDWIDTH_DIR}
 mkdir build
@@ -181,6 +194,29 @@ cmake ..
 make
 ./rocm-bandwidth-test
 
+#rocBLAS
+cd ${CURRENT_DIR}
+sudo yum install boost-devel
+git clone https://github.com/msgpack/msgpack-c.git
+cd msgpack-c
+git checkout c_master
+cmake .
+make
+sudo make install
+
+cd ${ROCm_DIR}
+while (!(test -d ${rocBLAS}) )
+do
+	git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b ${ROCm_VER}
+done
+
+cp ${CURRENT_DIR}/rocm/rocBLAS/install.sh rocBLAS/
+cp ${CURRENT_DIR}/rocm/rocBLAS/CMakeLists.txt rocBLAS/
+cd rocBLAS
+./install.sh
+sudo cp -rf build/release/rocblas-install/rocblas/include/* /opt/rocm/include
+sudo cp -rf build/release/rocblas-install/rocblas/lib/* /opt/rocm/lib
+
 #Test ROCmValidationSuite
 sudo yum install doxygen pciutils-devel
 
@@ -188,9 +224,18 @@ cd ${ROCm_DIR}
 ROCmValidationSuite_DIR=ROCmValidationSuite
 while (!(test -d ${ROCmValidationSuite_DIR}) )
 do
-        git clone https://github.com/ROCm-Developer-Tools/ROCmValidationSuite.git -b rocm-4.2.x
+        git clone https://github.com/ROCm-Developer-Tools/ROCmValidationSuite.git -b ${ROCm_VER}
 done
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeLists.txt ${ROCmValidationSuite_DIR}/
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeYamlDownload.cmake ${ROCmValidationSuite_DIR}/
+cp summer2021-36/rocm/ROCmValidationSuite/CMakeGtestDownload.cmake ${ROCmValidationSuite_DIR}/
 cd ${ROCmValidationSuite_DIR}
+mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh
+mkdir build && cd build
+cmake -DROCM_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PACKAGING_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
+make
+make package
+
 
 
 
