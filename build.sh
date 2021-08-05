@@ -88,7 +88,7 @@ build_install_roct()
         sudo make install
         if [[ ! -e "${ROCM_INSTALL_PATH}/lib/libhsakmt.so" ]]; then
                 sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib
-        if
+	fi
 }
 
 build_install_llvm()
