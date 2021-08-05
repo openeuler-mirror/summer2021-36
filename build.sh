@@ -3,10 +3,26 @@
 # #################################################
 # global variables
 # #################################################
-CURRENT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-ROCm_DIR=${CURRENT_DIR}/ROCm
-ROCM_INSTALL_PATH=/opt/rocm
+PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+ROCm_DIR=${PROJECT_DIR}/ROCm
+ROCM_INSTALL_PATH=${ROCM_INSTALL_PATH}
+ROCT_DIR=${ROCm_DIR}/ROCT-Thunk-Interface
+LLVM_DIR=${ROCm_DIR}/llvm-project
+ROCM_DEV_LIBS_DIR=${ROCm_DIR}/ROCm-Device-Libs
+ROCR_DIR=${ROCm_DIR}/ROCR-Runtime
+ROCM_CS_DIR=${ROCm_DIR}/ROCm-CompilerSupport
+ROCM_CMAKE_DIR=${ROCm_DIR}/rocm-cmake
+ROCCLR_DIR=${ROCm_DIR}/ROCclr
+HIP_DIR=${ROCm_DIR}/HIP
+rocminfo_dir=${ROCm_DIR}/rocminfo
+rocm_smi_lib_dir=${ROCm_DIR}/rocm_smi_lib
+rocm_bandwidth_dir=${ROCm_DIR}/rocm_bandwidth_test
+rocRand_dir=${ROCm_DIR}/rocRand
+rocBLAS_dir=${ROCm_DIR}/rocBLAS
+ROCmValidationSuite_DIR=${ROCm_DIR}/ROCmValidationSuite
 ROCm_VER=rocm-4.2.0
+ROCm_BRANCH=
+ROCm_NUMS=
 build_roct=false
 build_llvm=false
 build_rocm_dev=false
@@ -23,7 +39,8 @@ build_rocblas=false
 build_rocmvs=false
 build_all=true
 download_rocm=false
-arch=x86_64
+arch=X86
+gpu_arch=gfx803
 
 # #################################################
 # helper functions
@@ -50,7 +67,8 @@ rocBLAS build & installation helper script
       --rocrand                  Build and install rocRand
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
-      --arch                     Set specific architecture (x86_64 or aarch64, default x86_64)
+      --arch                     Set specific architecture (X86 or aarch64, default x86_64)
+      --gpu_arch                 Set specific gpu architecture (default gfx803)                      
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
 EOF
@@ -59,79 +77,193 @@ EOF
 # #################################################
 # build and install functions
 # #################################################
-build_install_all()
-{
-        printf "Will build and install all\n"
-}
-
 build_install_roct()
 {
         printf "Will build and install ROCT-Thunk-Interface\n"
+        sudo yum install cmake numactl-devel rpm-build pip
+        cd ${ROCT_DIR}
+        mkdir build && cd build
+        cmake ..
+        make
+        sudo make install
+        if [[ ! -e "${ROCM_INSTALL_PATH}/lib/libhsakmt.so" ]]; then
+                sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib
+        if
 }
 
 build_install_llvm()
 {
         printf "Will build and install llvm-project\n"
+        cd ${LLVM_DIR}
+        mkdir build && cd build
+        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=1 -DLLVM_TARGETS_TO_BUILD="AMDGPU;${arch}" -DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt;libclc;libcxx;libcxxabi;openmp;parallel-libs" ../llvm
+        make
+        sudo make install
 }
 
 build_install_rocm_dev()
 {
         printf "Will build and install rocm_device-Libs\n"
+        cd ${ROCM_DEV_LIBS_DIR}
+        mkdir build && cd build
+        CC=${ROCM_INSTALL_PATH}/llvm/bin/clang CXX=${ROCM_INSTALL_PATH}/llvm/bin/clang++ cmake -DLLVM_DIR=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_WERROR=1 -DLLVM_ENABLE_ASSERTIONS=1 -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
+        make
+        sudo make install
 }
 
 build_install_rocr()
 {
         printf "Will build and install ROCR-Runtime\n"
+        cd ${ROCR_DIR}/src
+        mkdir build && cd build
+        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
+        make
+        sudo make install
 }
 
 build_install_rocm_cs()
 {
         printf "Will build and install ROCm-CompilerSupport\n"
+        cd ${ROCM_CS_DIR}/lib/comgr
+        mkdir build && cd build
+        export LLVM_PROJECT=${ROCM_INSTALL_PATH}/llvm
+        export DEVICE_LIBS=${ROCM_INSTALL_PATH}
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PREFIX_PATH="$LLVM_PROJECT;$DEVICE_LIBS" ..
+        make
+        sudo make install
 }
 
 build_install_rocm_cmake()
 {
         printf "Will build and install rocm_cmake\n"
+        cd ${ROCM_CMAKE_DIR}
+        mkdir build && cd build
+        cmake ..
+        sudo cmake --build . --target install
 }
 
 build_install_rocclr()
 {
         printf "Will build and install ROCclr\n"
+        sudo yum install mesa-libGL-devel mesa-libGLU-devel
+        cd ${ROCm_DIR}
+        export ROCclr_DIR="$(readlink -f ROCclr)"
+        export OPENCL_DIR="$(readlink -f ROCm-OpenCL-Runtime)"
+        cd "$ROCclr_DIR"
+        mkdir -p build && cd build
+        cmake -DOPENCL_DIR="$OPENCL_DIR" -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/rocclr ..
+        make
+        sudo make install        
 }
 
 build_install_hip()
 {
         printf "Will build and install HIP\n"
+        cd ${HIP_DIR}
+        mkdir -p build && cd build
+        cmake -DCMAKE_PREFIX_PATH="$ROCclr_DIR/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang ..
+        make
+        sudo make install        
 }
 
 build_install_rocminfo()
 {
         printf "Will build and install rocminfo\n"
+        cd ${rocminfo_dir}
+        mkdir build
+        cd build
+        cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} ..
+        make
 }
 
 build_install_rocm_smi()
 {
         printf "Will build and install rocm_smi_lib\n"
+        cd ${rocm_smi_lib_dir}
+        mkdir build
+        cd build
+        cmake ..
+        make
+        sudo make install
 }
 
 build_install_rocm_bw()
 {
         printf "Will build and install rocm_bandwidth_test\n"
+        cd ${rocm_bandwidth_dir}
+        mkdir build
+        cd build
+        cmake ..
+        make
 }
 
 build_install_rocrand()
 {
         printf "Will build and install rocRand\n"
+        cd ${rocRand_dir}
+        mkdir build && cd build
+        CXX=hipcc CXXFLAGS=--rocm-path=${ROCM_INSTALL_PATH} cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=${gpu_arch} -DCMAKE_INSTALL_PATH=${ROCM_INSTALL_PATH} ..
+        make
+        sudo make install
 }
 
 build_install_rocblas()
 {
         printf "Will build and install rocBLAS\n"
+        sudo yum install boost-devel
+        cd ~/
+        git clone https://github.com/msgpack/msgpack-c.git
+        cd msgpack-c
+        git checkout c_master
+        cmake .
+        make
+        sudo make install
+        
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/install.sh ${rocBLAS_dir}
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/CMakeLists.txt.sh ${rocBLAS_dir}
+        cd ${rocBLAS_dir}
+        ./install.sh
+        sudo cp -rf build/release/rocblas-install/rocblas/include/* ${ROCM_INSTALL_PATH}/include
+        sudo cp -rf build/release/rocblas-install/rocblas/lib/* ${ROCM_INSTALL_PATH}/lib
 }
 
 build_install_rocmvs()
 {
         printf "Will build and install ROCmValidationSuite\n"
+        sudo yum install doxygen pciutils-devel
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeLists.txt ${ROCmValidationSuite_DIR}
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeYamlDownload.cmake ${ROCmValidationSuite_DIR}
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeGtestDownload.cmake ${ROCmValidationSuite_DIR}
+        cd ${ROCmValidationSuite_DIR}
+
+        if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
+                mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh
+        fi
+
+        mkdir build
+        cmake -DROCM_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PACKAGING_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
+        make
+        sudo make install
+        make package   
+}
+
+build_install_all()
+{
+        printf "Will build and install all\n"
+        build_install_roct
+        build_install_llvm
+        build_install_rocm_dev
+        build_install_rocr
+        build_install_rocm_cs
+        build_install_rocm_cmake
+        build_install_rocclr
+        build_install_hip
+        build_install_rocminfo
+        build_install_rocm_smi
+        build_install_rocm_bw
+        build_install_rocrand
+        build_install_rocblas
+        build_install_rocmvs
 }
 
 # #################################################
@@ -223,6 +355,43 @@ while true; do
         ;;
   esac
 done
+
+set -x
+
+if (!(test -e /usr/bin/python)); then
+        ln -s /usr/bin/python3 /usr/bin/python
+fi
+
+if (!(test -e ~/.bin/repo)); then
+        mkdir -p ~/.bin/
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+        chmod a+x ~/.bin/repo
+fi
+
+if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
+        ROCm_BRANCH=roc-4.2.x
+        ROCm_NUMS=49
+        echo "Build and install rocm-4.2.0"
+fi
+
+if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
+        ROCm_BRANCH=roc-4.3.x
+        ROCm_NUMS=47
+        echo "Build and install rocm-4.3.0"
+fi
+
+if (!(test -d ${ROCm_DIR})); then
+        mkdir -p ${ROCm_DIR}   
+fi
+
+cd ${ROCm_DIR}
+CURRENT_ROCm_NUMS=`ls -l |grep "^d"|wc -l`
+if [[ "${CURRENT_ROCm_NUMS}" != ${ROCm_NUMS} ]] || [[ "${download_rocm}" == true ]]; then
+        echo "Need download ROCm!"
+        ~/.bin/repo init -u https://gitee.com/huangyizhitt/ROCm.git -b ${ROCm_BRANCH} --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
+        ~/.bin/repo sync
+        git clone git@github.com:RadeonOpenCompute/llvm-project.git -b ${ROCm_VER}
+fi
 
 if [[ "${build_roct}" == true ]]; then
         build_all=false

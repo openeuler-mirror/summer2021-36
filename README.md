@@ -115,7 +115,7 @@ chmod a+x ~/.bin/repo
 mkdir -p ~/ROCm/
 cd ~/ROCm/
 ~/.bin/repo init -u https://gitee.com/huangyizhitt/ROCm.git -b roc-4.2.x --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
-repo sync
+~/.bin/repo sync
 ```
 本项目已经把ROCm仓库的地址重定向到github镜像https://github.com.cnpmjs.org/ 上，以加速整包下载速度。
 
