@@ -246,15 +246,20 @@ build_install_rocblas()
         printf "Will build and install rocBLAS\n"
         sudo yum install boost-devel
         cd ~/
-        git clone https://github.com/msgpack/msgpack-c.git
+        git clone https://github.com.cnpmjs.org/msgpack/msgpack-c.git
         cd msgpack-c
         git checkout c_master
         cmake .
         make
         sudo make install
         
+        git checkout cpp_master
+        cmake -DMSGPACK_CXX11=ON .
+        make 
+        sudo make install
+        
         cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/install.sh ${rocBLAS_dir}
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/CMakeLists.txt.sh ${rocBLAS_dir}
+        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/CMakeLists.txt ${rocBLAS_dir}
         cd ${rocBLAS_dir}
         ./install.sh
         sudo cp -rf build/release/rocblas-install/rocblas/include/* ${ROCM_INSTALL_PATH}/include

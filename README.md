@@ -296,6 +296,12 @@ cmake .
 make
 sudo make install
 
+git checkout cpp_master
+cmake -DMSGPACK_CXX11=ON .
+make 
+sudo make install
+
+
 git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b rocm-4.2.0
 cp summer2021-36/rocm/rocBLAS/install.sh rocBLAS/                       
 cp summer2021-36/rocm/rocBLAS/CMakeLists.txt rocBLAS/
