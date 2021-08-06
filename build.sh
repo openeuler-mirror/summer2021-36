@@ -5,7 +5,7 @@
 # #################################################
 PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 ROCm_DIR=${PROJECT_DIR}/ROCm
-ROCM_INSTALL_PATH=${ROCM_INSTALL_PATH}
+ROCM_INSTALL_PATH=/opt/rocm
 ROCT_DIR=${ROCm_DIR}/ROCT-Thunk-Interface
 LLVM_DIR=${ROCm_DIR}/llvm-project
 ROCM_DEV_LIBS_DIR=${ROCm_DIR}/ROCm-Device-Libs
@@ -17,7 +17,7 @@ HIP_DIR=${ROCm_DIR}/HIP
 rocminfo_dir=${ROCm_DIR}/rocminfo
 rocm_smi_lib_dir=${ROCm_DIR}/rocm_smi_lib
 rocm_bandwidth_dir=${ROCm_DIR}/rocm_bandwidth_test
-rocRand_dir=${ROCm_DIR}/rocRand
+rocRand_dir=${ROCm_DIR}/rocRAND
 rocBLAS_dir=${ROCm_DIR}/rocBLAS
 ROCmValidationSuite_DIR=${ROCm_DIR}/ROCmValidationSuite
 ROCm_VER=rocm-4.2.0
@@ -80,32 +80,46 @@ EOF
 build_install_roct()
 {
         printf "Will build and install ROCT-Thunk-Interface\n"
-        sudo yum install cmake numactl-devel rpm-build pip
+        sudo yum install cmake numactl-devel rpm-build 
         cd ${ROCT_DIR}
-        mkdir build && cd build
+        mkdir -p build && cd build
         cmake ..
         make
         sudo make install
-        if [[ ! -e "${ROCM_INSTALL_PATH}/lib/libhsakmt.so" ]]; then
-                sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib
+        if [[ ! -e ${ROCM_INSTALL_PATH}/lib/libhsakmt.so ]]; then
+                sudo mkdir -p ${ROCM_INSTALL_PATH}/lib
+                sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib/
 	fi
+
+        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/lib* ]]; then
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib64:$LD_LIBRARY_PATH' ~/.bash_profile
+                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/bin:$PATH' ~/.bash_profile
+                source ~/.bash_profile
+        fi
 }
 
 build_install_llvm()
 {
         printf "Will build and install llvm-project\n"
         cd ${LLVM_DIR}
-        mkdir build && cd build
+        mkdir -p build && cd build
         cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=1 -DLLVM_TARGETS_TO_BUILD="AMDGPU;${arch}" -DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt;libclc;libcxx;libcxxabi;openmp;parallel-libs" ../llvm
         make
         sudo make install
+
+        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/llvm/lib* ]]; then
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/llvm/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/llvm/bin:$PATH' ~/.bash_profile
+                source ~/.bash_profile
+        fi
 }
 
 build_install_rocm_dev()
 {
         printf "Will build and install rocm_device-Libs\n"
         cd ${ROCM_DEV_LIBS_DIR}
-        mkdir build && cd build
+        mkdir -p build && cd build
         CC=${ROCM_INSTALL_PATH}/llvm/bin/clang CXX=${ROCM_INSTALL_PATH}/llvm/bin/clang++ cmake -DLLVM_DIR=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_WERROR=1 -DLLVM_ENABLE_ASSERTIONS=1 -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
@@ -115,17 +129,22 @@ build_install_rocr()
 {
         printf "Will build and install ROCR-Runtime\n"
         cd ${ROCR_DIR}/src
-        mkdir build && cd build
+        mkdir -p build && cd build
         cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
+
+        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hsa/lib* ]]; then
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hsa/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                source ~/.bash_profile
+        fi
 }
 
 build_install_rocm_cs()
 {
         printf "Will build and install ROCm-CompilerSupport\n"
         cd ${ROCM_CS_DIR}/lib/comgr
-        mkdir build && cd build
+        mkdir -p build && cd build
         export LLVM_PROJECT=${ROCM_INSTALL_PATH}/llvm
         export DEVICE_LIBS=${ROCM_INSTALL_PATH}
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PREFIX_PATH="$LLVM_PROJECT;$DEVICE_LIBS" ..
@@ -137,7 +156,7 @@ build_install_rocm_cmake()
 {
         printf "Will build and install rocm_cmake\n"
         cd ${ROCM_CMAKE_DIR}
-        mkdir build && cd build
+        mkdir -p build && cd build
         cmake ..
         sudo cmake --build . --target install
 }
@@ -161,26 +180,36 @@ build_install_hip()
         printf "Will build and install HIP\n"
         cd ${HIP_DIR}
         mkdir -p build && cd build
-        cmake -DCMAKE_PREFIX_PATH="$ROCclr_DIR/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang ..
+        cmake -DCMAKE_PREFIX_PATH="${ROCCLR_DIR}/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang ..
         make
-        sudo make install        
+        sudo make install
+
+        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hip/lib* ]]; then     
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hip/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/hip/bin:$PATH' ~/.bash_profile
+                source ~/.bash_profile
+                sudo sed -i '$a $HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
+                sudo sed -i '$a $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
+                sudo sed -i '$a $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
+        fi
 }
 
 build_install_rocminfo()
 {
         printf "Will build and install rocminfo\n"
         cd ${rocminfo_dir}
-        mkdir build
+        mkdir -p build
         cd build
-        cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} ..
+        cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
+        sudo make install
 }
 
 build_install_rocm_smi()
 {
         printf "Will build and install rocm_smi_lib\n"
         cd ${rocm_smi_lib_dir}
-        mkdir build
+        mkdir -p build
         cd build
         cmake ..
         make
@@ -191,7 +220,7 @@ build_install_rocm_bw()
 {
         printf "Will build and install rocm_bandwidth_test\n"
         cd ${rocm_bandwidth_dir}
-        mkdir build
+        mkdir -p build
         cd build
         cmake ..
         make
@@ -201,10 +230,15 @@ build_install_rocrand()
 {
         printf "Will build and install rocRand\n"
         cd ${rocRand_dir}
-        mkdir build && cd build
+        mkdir -p build && cd build
         CXX=hipcc CXXFLAGS=--rocm-path=${ROCM_INSTALL_PATH} cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=${gpu_arch} -DCMAKE_INSTALL_PATH=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
+        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hiprand/lib* ]]; then
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hiprand/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/rocrand/lib:$LD_LIBRARY_PATH' ~/.bash_profile
+                source ~/.bash_profile
+        fi
 }
 
 build_install_rocblas()
@@ -240,7 +274,7 @@ build_install_rocmvs()
                 mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh
         fi
 
-        mkdir build
+        mkdir -p build && cd build
         cmake -DROCM_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PACKAGING_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
@@ -370,13 +404,13 @@ fi
 
 if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
         ROCm_BRANCH=roc-4.2.x
-        ROCm_NUMS=49
+        ROCm_NUMS=15
         echo "Build and install rocm-4.2.0"
 fi
 
 if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
         ROCm_BRANCH=roc-4.3.x
-        ROCm_NUMS=47
+        ROCm_NUMS=15
         echo "Build and install rocm-4.3.0"
 fi
 
@@ -388,7 +422,8 @@ cd ${ROCm_DIR}
 CURRENT_ROCm_NUMS=`ls -l |grep "^d"|wc -l`
 if [[ "${CURRENT_ROCm_NUMS}" != ${ROCm_NUMS} ]] || [[ "${download_rocm}" == true ]]; then
         echo "Need download ROCm!"
-        ~/.bin/repo init -u https://gitee.com/huangyizhitt/ROCm.git -b ${ROCm_BRANCH} --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
+#        ~/.bin/repo init -u https://gitee.com/huangyizhitt/ROCm.git -b ${ROCm_BRANCH} --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
+        ~/.bin/repo init -u https://gitee.com/openeuler-competition/summer2021-36.git -m ${ROCm_VER}.xml --repo-url=https://gerrit-googlesource.lug.ustc.edu.cn/git-repo
         ~/.bin/repo sync
         git clone git@github.com:RadeonOpenCompute/llvm-project.git -b ${ROCm_VER}
 fi
