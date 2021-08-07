@@ -79,7 +79,8 @@ EOF
 # #################################################
 env_setting()
 {
-        if [[ ! -d ${ROCM_INSTALL_PATH} ]]; then
+        ENVLAGS=`grep -nr 'LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib:$LD_LIBRARY_PATH' /etc/profile`
+        if [[ ! ${ENVLAGS} ]]; then
                 sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib:$LD_LIBRARY_PATH' /etc/profile
                 sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib64:$LD_LIBRARY_PATH' /etc/profile
                 sudo sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/bin:$PATH' /etc/profile
@@ -187,8 +188,9 @@ build_install_hip()
         sudo make install
 
         if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
-                HIPFLAGS=`sed -n '669p' ${ROCM_INSTALL_PATH}/hip/bin/hipcc`
-                if [[ ${HIPFLAGS} != *--rocm-path=${ROCM_INSTALL_PATH}* ]]; then     
+                HIPFLAGS=`grep -nr '$HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' "' ${ROCM_INSTALL_PATH}/hip/bin/hipcc`
+
+                if [[ ! ${HIPFLAGS} ]]; then     
                         sudo sed -i '669i $HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
                         sudo sed -i '670i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
                         sudo sed -i '671i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
