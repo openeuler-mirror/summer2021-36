@@ -37,7 +37,7 @@ build_rocm_bw=false
 build_rocrand=false
 build_rocblas=false
 build_rocmvs=false
-build_all=true
+build_all=false
 download_rocm=false
 arch=X86
 gpu_arch=gfx803
@@ -75,6 +75,26 @@ EOF
 }
 
 # #################################################
+# Environment variable settings functions
+# #################################################
+env_setting()
+{
+        if [[ ! -d ${ROCM_INSTALL_PATH} ]]; then
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib64:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/bin:$PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/llvm/lib:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/llvm/bin:$PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hsa/lib:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hip/lib:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/hip/bin:$PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hiprand/lib:$LD_LIBRARY_PATH' /etc/profile
+                sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/rocrand/lib:$LD_LIBRARY_PATH' /etc/profile
+                source /etc/profile
+        fi
+}
+
+# #################################################
 # build and install functions
 # #################################################
 build_install_roct()
@@ -90,13 +110,6 @@ build_install_roct()
                 sudo mkdir -p ${ROCM_INSTALL_PATH}/lib
                 sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib/
 	fi
-
-        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/lib* ]]; then
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/lib64:$LD_LIBRARY_PATH' ~/.bash_profile
-                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/bin:$PATH' ~/.bash_profile
-                source ~/.bash_profile
-        fi
 }
 
 build_install_llvm()
@@ -107,12 +120,6 @@ build_install_llvm()
         cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=1 -DLLVM_TARGETS_TO_BUILD="AMDGPU;${arch}" -DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt;libclc;libcxx;libcxxabi;openmp;parallel-libs" ../llvm
         make
         sudo make install
-
-        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/llvm/lib* ]]; then
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/llvm/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/llvm/bin:$PATH' ~/.bash_profile
-                source ~/.bash_profile
-        fi
 }
 
 build_install_rocm_dev()
@@ -133,11 +140,6 @@ build_install_rocr()
         cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
-
-        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hsa/lib* ]]; then
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hsa/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                source ~/.bash_profile
-        fi
 }
 
 build_install_rocm_cs()
@@ -184,13 +186,13 @@ build_install_hip()
         make
         sudo make install
 
-        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hip/lib* ]]; then     
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hip/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                sed -i '$a export PATH='${ROCM_INSTALL_PATH}'/hip/bin:$PATH' ~/.bash_profile
-                source ~/.bash_profile
-                sudo sed -i '$a $HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
-                sudo sed -i '$a $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
-                sudo sed -i '$a $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
+        if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
+                HIPFLAGS=`sed -n '669p' ${ROCM_INSTALL_PATH}/hip/bin/hipcc`
+                if [[ ${HIPFLAGS} != *--rocm-path=${ROCM_INSTALL_PATH}* ]]; then     
+                        sudo sed -i '669i $HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
+                        sudo sed -i '670i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
+                        sudo sed -i '671i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
+                fi
         fi
 }
 
@@ -234,11 +236,6 @@ build_install_rocrand()
         CXX=hipcc CXXFLAGS=--rocm-path=${ROCM_INSTALL_PATH} cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=${gpu_arch} -DCMAKE_INSTALL_PATH=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
-        if [[ $LD_LIBRARY_PATH != *${ROCM_INSTALL_PATH}/hiprand/lib* ]]; then
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/hiprand/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/rocrand/lib:$LD_LIBRARY_PATH' ~/.bash_profile
-                source ~/.bash_profile
-        fi
 }
 
 build_install_rocblas()
@@ -396,6 +393,8 @@ while true; do
 done
 
 set -x
+
+env_setting
 
 if (!(test -e /usr/bin/python)); then
         ln -s /usr/bin/python3 /usr/bin/python
