@@ -60,16 +60,44 @@ rocBlAS是ROCm的线性代数库，它依赖rocRand。
 # 安装教程 X86
 在x86下，几乎不需要修改任何代码，就可以把ROCm的软件包编译并移植进openEuler。本项目提供如下两种方式对相关软件包进行编译安装
 ## 1. 使用本项目提供的脚本自动下载、编译、安装
+本项目提供完整的下载、编译、安装的自动化编译脚本，具体使用方法如下：
 ```
 git clone https://gitlab.summer-ospp.ac.cn/summer2021/210010058 或者 
 git clone https://gitee.com/openeuler-competition/summer2021-36
-cd summer2021-36/kernel
-git submodule init && git submodule update
-cd ..
-./build.sh
+cd summer2021-36
+
+//Step 1. 下载、编译、安装内核
+./build_kernel.sh
+
+//Step 2. 下载、编译、安装ROCm
+./build.sh [option]
+
+//不加选项时仅添加环境变量、安装下载工具和下载ROCm软件包
+//具体选项特性如下：
+      -h | --help                Print this help message
+      -a | --all                 Build and install all rocm software (default)
+      -d | --download            Download ROCm
+      --roct                     Build and install ROCT-Thunk-Interface
+      --llvm                     Build and install llvm-project
+      --rocm_dev                 Build and install rocm_device-Libs
+      --rocr                     Build and install ROCR-Runtime
+      --rocm_cs                  Build and install ROCm-CompilerSupport
+      --rocm_cmake               Build and install rocm_cmake
+      --rocclr                   Build and install ROCclr
+      --hip                      Build and install HIP
+      --rocminfo                 Build and install rocminfo
+      --rocm_smi                 Build and install rocm_smi_lib
+      --rocm_bw                  Build and install rocm_bandwidth_test
+      --rocrand                  Build and install rocRand
+      --rocblas                  Build and install rocBLAS
+      --rocmvs                   Build and install ROCmValidationSuite
+      --arch                     Set specific architecture (X86 or aarch64, default x86_64)
+      --gpu_arch                 Set specific gpu architecture (default gfx803)                      
+      --prefix                   Set specific install path to ROCm
+      -v | --rocm-version        Set specific rocm version to build
 ```
 
-## 2. 分步编译软件包
+## 2. 自行下载软件包与分步编译
 分步编译软件将分步展示本项目对软件包及其依赖软件进行的修改和编译、安装过程。
 ### openEuler内核编译
 openEuler 21.03的默认内核并没有开启KFD，无法对ROCm提供驱动支持，因此，我们必须重新编译内核。openEuler内核可以按照1中同步本项目的kernel子模块获得，该模块fork自openEuler内核开源仓库。也可以从openEuler内核仓库获得，注意，由于kernel过大，建议使用ssh进行git clone。编译配置以及编译过程如下:
