@@ -1,0 +1,64 @@
+diff --git a/CMakeGtestDownload.cmake b/CMakeGtestDownload.cmake
+index 5a17734..4d6901f 100644
+--- a/CMakeGtestDownload.cmake
++++ b/CMakeGtestDownload.cmake
+@@ -29,7 +29,7 @@ project(googletest-download NONE)
+ 
+ include(ExternalProject)
+ ExternalProject_Add(googletest
+-  GIT_REPOSITORY    https://github.com/google/googletest.git
++  GIT_REPOSITORY    https://gitee.com/huangyizhitt/googletest.git
+   GIT_TAG           release-1.10.0
+   SOURCE_DIR        "${CMAKE_BINARY_DIR}/googletest-src"
+   BINARY_DIR        "${CMAKE_BINARY_DIR}/googletest-build"
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 07048b8..50b70c6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -73,6 +73,8 @@ execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/rvs_os_helper.sh
+ if(result)
+    message(FATAL_ERROR "Could not obtain OS type: ${result}")
+ endif()
++
++set(RVS_OS_TYPE "OpenEuler")
+ message(STATUS "RVS_OS_TYPE: ${RVS_OS_TYPE}")
+ if (${RVS_OS_TYPE} STREQUAL "ubuntu")
+   set(RVS_OS_TYPE_NUM 1)
+@@ -81,6 +83,8 @@ elseif ((${RVS_OS_TYPE} STREQUAL "centos") OR (${RVS_OS_TYPE} STREQUAL "rhel")
+   OR (${RVS_OS_TYPE} STREQUAL "sles"))
+   set(RVS_OS_TYPE_NUM 2)
+   execute_process(COMMAND sudo yum -y install rocblas )
++elseif (${RVS_OS_TYPE} STREQUAL "OpenEuler")
++  set(RVS_OS_TYPE_NUM 2)
+ else()
+   set(RVS_OS_TYPE_NUM 0)
+ endif()
+@@ -162,6 +166,8 @@ elseif (${RVS_OS_TYPE} STREQUAL "rhel")
+   set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
+ elseif (${RVS_OS_TYPE} STREQUAL "sles")
+   set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
++elseif (${RVS_OS_TYPE} STREQUAL "OpenEuler")
++  set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
+ else()
+   set(ROCT_LIB_DIR "${ROCM_PATH}/lib" CACHE PATH "Contains library files exported by ROC Trunk")
+ endif()
+diff --git a/CMakeYamlDownload.cmake b/CMakeYamlDownload.cmake
+index 299d72e..5d6a971 100644
+--- a/CMakeYamlDownload.cmake
++++ b/CMakeYamlDownload.cmake
+@@ -29,7 +29,7 @@ project(yaml-download NONE)
+ 
+ include(ExternalProject)
+ ExternalProject_Add(yaml
+-  GIT_REPOSITORY    https://github.com/jbeder/yaml-cpp.git
++  GIT_REPOSITORY    https://gitee.com/huangyizhitt/yaml-cpp.git
+   GIT_TAG           master
+   SOURCE_DIR        "${CMAKE_BINARY_DIR}/yaml-src"
+   BINARY_DIR        "${CMAKE_BINARY_DIR}/yaml-build"
+@@ -37,4 +37,4 @@ ExternalProject_Add(yaml
+   BUILD_COMMAND     ""
+   INSTALL_COMMAND   ""
+   TEST_COMMAND      ""
+-)
+\ No newline at end of file
++)

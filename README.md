@@ -163,7 +163,6 @@ cd build
 cmake ..
 make
 sudo make install
-sudo cp /opt/rocm/lib64/libhsakmt.so /opt/rocm/lib      //编译ROCmValidationSuite时，会从lib下找libhsakmt.so进行链接
 ```
 默认会安装在/opt/rocm目录下（推荐），可以在cmake时用CMAKE_INSTALL_PREFIX定义自定义路径。
 ```
@@ -331,9 +330,8 @@ sudo make install
 
 
 git clone https://github.com/ROCmSoftwarePlatform/rocBLAS.git -b rocm-4.2.0
-cp summer2021-36/rocm/rocBLAS/install.sh rocBLAS/                       
-cp summer2021-36/rocm/rocBLAS/CMakeLists.txt rocBLAS/
 cd rocBLAS
+git apply summer2021-36/rocm/rocBLAS/rocBLAS.diff
 ./install.sh
 sudo cp -rf build/release/rocblas-install/rocblas/include/* /opt/rocm/include
 sudo cp -rf build/release/rocblas-install/rocblas/lib/* /opt/rocm/lib
@@ -343,16 +341,13 @@ sudo cp -rf build/release/rocblas-install/rocblas/lib/* /opt/rocm/lib
 ```
 sudo yum install doxygen pciutils-devel
 git clone https://github.com/ROCm-Developer-Tools/ROCmValidationSuite.git -b rocm-4.2.0
-cp summer2021-36/rocm/ROCmValidationSuite/CMakeLists.txt ROCmValidationSuite/                       
-cp summer2021-36/rocm/ROCmValidationSuite/CMakeYamlDownload.cmake ROCmValidationSuite/
-cp summer2021-36/rocm/ROCmValidationSuite/CMakeGtestDownload.cmake ROCmValidationSuite/
-cd ROCmValidationSuite
-mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh         
+cd ROCmValidationSuite 
+git apply summer2021-36/rocm/ROCmValidationSuite/ROCmValidationSuite.diff     
 mkdir build
 cmake -DROCM_PATH=/opt/rocm -DCMAKE_INSTALL_PREFIX=/opt/rocm -DCMAKE_PACKAGING_INSTALL_PREFIX=/opt/rocm ..
 make
 sudo make install
-make package    //编译出rpm包
+sudo make package    //编译出rpm包
 ```
 
 # 单元测试

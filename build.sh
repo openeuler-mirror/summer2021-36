@@ -107,10 +107,10 @@ build_install_roct()
         cmake ..
         make
         sudo make install
-        if [[ ! -e ${ROCM_INSTALL_PATH}/lib/libhsakmt.so ]]; then
-                sudo mkdir -p ${ROCM_INSTALL_PATH}/lib
-                sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib/
-	fi
+#        if [[ ! -e ${ROCM_INSTALL_PATH}/lib/libhsakmt.so ]]; then
+#                sudo mkdir -p ${ROCM_INSTALL_PATH}/lib
+#                sudo cp ${ROCM_INSTALL_PATH}/lib64/libhsakmt.so ${ROCM_INSTALL_PATH}/lib/
+#	fi
 }
 
 build_install_llvm()
@@ -257,9 +257,8 @@ build_install_rocblas()
         make 
         sudo make install
         
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/install.sh ${rocBLAS_dir}
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/CMakeLists.txt ${rocBLAS_dir}
         cd ${rocBLAS_dir}
+        git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/rocBLAS.diff
         ./install.sh
         sudo cp -rf build/release/rocblas-install/rocblas/include/* ${ROCM_INSTALL_PATH}/include
         sudo cp -rf build/release/rocblas-install/rocblas/lib/* ${ROCM_INSTALL_PATH}/lib
@@ -269,20 +268,19 @@ build_install_rocmvs()
 {
         printf "Will build and install ROCmValidationSuite\n"
         sudo yum install doxygen pciutils-devel
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeLists.txt ${ROCmValidationSuite_DIR}
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeYamlDownload.cmake ${ROCmValidationSuite_DIR}
-        cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/CMakeGtestDownload.cmake ${ROCmValidationSuite_DIR}
-        cd ${ROCmValidationSuite_DIR}
 
-        if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
-                mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh
-        fi
+        cd ${ROCmValidationSuite_DIR}
+        git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/ROCmValidationSuite.diff
+
+ #       if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
+ #               mv rvs/conf/deviceid.sh.in rvs/conf/deviceid.sh
+ #       fi
 
         mkdir -p build && cd build
         cmake -DROCM_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_PACKAGING_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
-        make package   
+        sudo make package   
 }
 
 build_install_all()

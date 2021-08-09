@@ -28,8 +28,14 @@ if ( ${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   message(FATAL "In-source build is not allowed")
 endif ()
 
-set(ROCM_PATH "/opt/rocm" CACHE STRING "ROCM install path")
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE STRING "CMAKE installation directory")
+set(ROCM_PATH "/opt/rocm" CACHE PATH "ROCM install path")
+set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "CMAKE installation directory")
+set(ROCR_INC_DIR "${ROCM_PATH}/include" CACHE PATH "Contains header files exported by ROC Runtime" FORCE)
+set(ROCR_LIB_DIR "${ROCM_PATH}/lib" CACHE PATH "Contains library files exported by ROC Runtime" FORCE)
+set(HIP_INC_DIR "${ROCM_PATH}/hip" )
+set(HIP_INC_DIR "${ROCM_PATH}/hip" CACHE PATH "Contains header files exported by ROC Runtime" FORCE)
+set(ROCT_INC_DIR "${ROCM_PATH}/include" CACHE PATH "Contains header files exported by ROC Trunk" FORCE)
+
 execute_process(COMMAND ln -s /usr/bin/python3 /usr/bin/python)
 
 #
@@ -58,15 +64,15 @@ if (NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-#execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/rvs_os_helper.sh
-#  RESULT_VARIABLE result
-#  OUTPUT_VARIABLE RVS_OS_TYPE
-#  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-#  OUTPUT_STRIP_TRAILING_WHITESPACE
-#)
-#if(result)
-#   message(FATAL_ERROR "Could not obtain OS type: ${result}")
-#endif()
+execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/rvs_os_helper.sh
+  RESULT_VARIABLE result
+  OUTPUT_VARIABLE RVS_OS_TYPE
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result)
+   message(FATAL_ERROR "Could not obtain OS type: ${result}")
+endif()
 
 set(RVS_OS_TYPE "OpenEuler")
 message(STATUS "RVS_OS_TYPE: ${RVS_OS_TYPE}")
@@ -92,8 +98,9 @@ endif ()
 ## Include common cmake modules
 include ( utils )
 
-## Setup the package version default (the actual one is taken from the latest Git tag).
-get_version ( "0.0.0" )
+## Setup the package version default .
+set ( RVS_VERSION "1.0.0" )
+get_version ( ${RVS_VERSION} )
 
 # Package Generator  #######################################################
 # set(CPACK_GENERATOR "DEB")
@@ -104,12 +111,44 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The ROCm Validation Suite – The ROCm Va
 set(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
-set(CPACK_PACKAGE_VENDOR "AMD")
-set(CPACK_PACKAGE_CONTACT "Advanced Micro Devices Inc.")
-set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices Inc.")
+set(CPACK_PACKAGE_CONTACT "ROCM Validation Suite Support <rocm-validation-suite.support@amd.com>")
+#set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocblas")
+set(CPACK_RPM_PACKAGE_REQUIRES "rocblas")
+
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL applications rvsmodule)
 
+# Package naming change
+set(ROCM_VERSION_FOR_PACKAGE "99999")
+# update version accordingly
+if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
+  set(ROCM_VERSION_FOR_PACKAGE $ENV{ROCM_LIBPATCH_VERSION})
+endif()
+
+# debian related changes
+if (DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+   set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+else()
+   set(CPACK_DEBIAN_PACKAGE_RELEASE "local")
+endif()
+
+# RMP related changes
+if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
+  set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
+else()
+  set(CPACK_RPM_PACKAGE_RELEASE "local")
+endif()
+# distro changes
+if(CPACK_RPM_PACKAGE_RELEASE)
+  set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
+endif()
+
+set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.${ROCM_VERSION_FOR_PACKAGE}")
+
+set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
 set(RVS_COVERAGE FALSE CACHE BOOL "TRUE if code coverage is to be provided")
 set(RVS_BUILD_TESTS TRUE CACHE BOOL "TRUE if tests are to be built")
 
@@ -120,16 +159,14 @@ set(RVS_ROCMSMI "0" CACHE STRING "1 = use local rocm_smi_lib")
 set(RVS_LIB_DIR "${CMAKE_BINARY_DIR}/rvslib" CACHE PATH "Contains RVS library")
 set(YAML_INC_DIR "${CMAKE_BINARY_DIR}/yaml-src/include" CACHE PATH "Contains header files exported by yaml-cpp")
 set(YAML_LIB_DIR "${CMAKE_BINARY_DIR}/yaml-build" CACHE PATH "Contains library files exported by yaml-cpp")
-set(ROCR_INC_DIR "${ROCM_PATH}/include" CACHE PATH "Contains header files exported by ROC Runtime")
-set(ROCR_LIB_DIR "${ROCM_PATH}/lib" CACHE PATH "Contains library files exported by ROC Runtime")
-set(HIP_INC_DIR "${ROCM_PATH}/hip" CACHE PATH "Contains header files exported by ROC Runtime")
-set(ROCT_INC_DIR "${ROCM_PATH}/include" CACHE PATH "Contains header files exported by ROC Trunk")
 
 if (${RVS_OS_TYPE} STREQUAL "centos")
   set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
 elseif (${RVS_OS_TYPE} STREQUAL "rhel")
   set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
 elseif (${RVS_OS_TYPE} STREQUAL "sles")
+  set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
+elseif (${RVS_OS_TYPE} STREQUAL "OpenEuler")
   set(ROCT_LIB_DIR "${ROCM_PATH}/lib64" CACHE PATH "Contains library files exported by ROC Trunk")
 else()
   set(ROCT_LIB_DIR "${ROCM_PATH}/lib" CACHE PATH "Contains library files exported by ROC Trunk")
@@ -388,6 +425,8 @@ set(ROCM_SMI_LIB "rocm_smi64" CACHE STRING "rocm_smi library name")
 
 set(RVS_BINTEST_FOLDER ${CMAKE_BINARY_DIR}/bintest)
 
+set(HCC_CXX_FLAGS  "-Xlinker --enable-new-dtags -fno-gpu-rdc --amdgpu-target=gfx803 --amdgpu-target=gfx900 --amdgpu-target=gfx906 --amdgpu-target=gfx908 ")
+
 add_subdirectory(rvs)
 add_subdirectory(rvslib)
 add_subdirectory(gm.so)
@@ -402,7 +441,8 @@ add_subdirectory(rcqt.so)
 add_subdirectory(smqt.so)
 add_subdirectory(mem.so)
 add_subdirectory(babel.so)
-add_subdirectory(edp.so)
+#add_subdirectory(edp.so)
+add_subdirectory(perf.so)
 
 if (RVS_BUILD_TESTS)
   add_subdirectory(testif.so)
@@ -482,7 +522,7 @@ add_custom_target(rvs_userguide ALL
 add_dependencies(rvs_userguide rvs_doc)
 
 install(FILES "${CMAKE_BINARY_DIR}/doc/man/man1/rvs.1"
-  DESTINATION ${CMAKE_PACKAGING_INSTALL_PREFIX}/rvs/man
+  DESTINATION ${CMAKE_PACKAGING_INSTALL_PREFIX}/share/man/man1
   COMPONENT applications
 )
 
@@ -495,6 +535,10 @@ else()
   message("Doxygen is not found. Will not generate documentation.")
 endif(DOXYGEN_FOUND)
 
+# make changes to deviceid.sh.in and rename it to deviceid.sh
+configure_file(${CMAKE_SOURCE_DIR}/rvs/conf/deviceid.sh.in 
+  ${CMAKE_SOURCE_DIR}/rvs/conf/deviceid.sh
+  @ONLY)
 install(FILES ${CMAKE_SOURCE_DIR}/rvs/conf/deviceid.sh
   DESTINATION ${CMAKE_PACKAGING_INSTALL_PREFIX}/rvs/conf
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
@@ -503,6 +547,7 @@ install(FILES ${CMAKE_SOURCE_DIR}/rvs/conf/deviceid.sh
 )
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/testscripts/
   DESTINATION ${CMAKE_PACKAGING_INSTALL_PREFIX}/rvs/testscripts
+  USE_SOURCE_PERMISSIONS
   COMPONENT rvsmodule
 )
 

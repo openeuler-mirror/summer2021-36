@@ -1,0 +1,98 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4c33a68e..1f96ad35 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -220,7 +220,7 @@ if(NOT SKIP_LIBRARY)
+       set( tensile_fork "ROCmSoftwarePlatform" CACHE STRING "Tensile fork to use" )
+       file (STRINGS "tensile_tag.txt" read_tensile_tag)
+       set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
+-      virtualenv_install("git+https://github.com/${tensile_fork}/Tensile.git@${tensile_tag}")
++      virtualenv_install("git+https://gitee.com/huangyizhitt/Tensile.git@${tensile_tag}")
+       message (STATUS "using GIT Tensile fork=${tensile_fork} from branch=${tensile_tag}")
+     endif()
+     message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
+diff --git a/install.sh b/install.sh
+index 71580347..310572ca 100755
+--- a/install.sh
++++ b/install.sh
+@@ -56,10 +56,10 @@ supported_distro( )
+   fi
+ 
+   case "${ID}" in
+-    ubuntu|centos|rhel|fedora|sles|opensuse-leap)
++    ubuntu|centos|rhel|fedora|sles|opensuse-leap|openEuler)
+         true
+         ;;
+-    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, and Fedora\n"
++    *)  printf "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, openEuler, and Fedora\n"
+         exit 2
+         ;;
+   esac
+@@ -200,7 +200,7 @@ install_packages( )
+   fi
+ 
+   case "${ID}" in
+-    centos|rhel|sles|opensuse-leap)
++    centos|rhel|sles|opensuse-leap|openEuler)
+       if [[ "${tensile_msgpack_backend}" == true ]]; then
+         install_msgpack_from_source
+       fi
+@@ -224,8 +224,8 @@ install_packages( )
+       fi
+       ;;
+ 
+-    centos|rhel)
+-      if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
++    centos|rhel|openEuler)
++	    if [[ ( "${VERSION_ID}" -ge 8 ) || ( "${VERSION_ID}" == "21.03" ) ]]; then
+         install_yum_packages "${library_dependencies_centos_rhel_8[@]}"
+ 
+         if [[ "${build_clients}" == true ]]; then
+@@ -293,7 +293,7 @@ fi
+ 
+ # The following function exits script if an unsupported distro is detected
+ supported_distro
+-
++rocblas-install=/opt/rocm
+ # #################################################
+ # global variables
+ # #################################################
+@@ -485,7 +485,7 @@ install_blis()
+     #Download prebuilt AMD multithreaded blis
+     if [[ "${cpu_ref_lib}" == blis ]] && [[ ! -e "./blis/lib/libblis.so" ]]; then
+       case "${ID}" in
+-          centos|rhel|sles|opensuse-leap)
++          centos|rhel|sles|opensuse-leap|openEuler)
+               wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
+               ;;
+           ubuntu)
+@@ -520,7 +520,7 @@ fi
+ cmake_executable=cmake
+ 
+ case "${ID}" in
+-  centos|rhel)
++  centos|rhel|openEuler)
+   cmake_executable=cmake3
+   ;;
+ esac
+@@ -671,9 +671,9 @@ pushd .
+ 
+   # Build library with AMD toolchain because of existense of device kernels
+   if [[ "${build_clients}" == true ]]; then
+-    CXX=${cxx} CC=${cc} FC=${fc} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
++    CXX=${cxx} CC=${cc} FC=${fc} CXXFLAGS=--rocm-path=/opt/rocm ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
+   else
+-    CXX=${cxx} CC=${cc} ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
++    CXX=${cxx} CC=${cc} CXXFLAGS=--rocm-path=/opt/rocm ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
+   fi
+   check_exit_code "$?"
+ 
+@@ -696,7 +696,7 @@ pushd .
+       ubuntu)
+         elevate_if_not_root dpkg -i rocblas[_\-]*.deb
+       ;;
+-      centos|rhel)
++      centos|rhel|openEuler)
+         elevate_if_not_root yum -y localinstall rocblas-*.rpm
+       ;;
+       fedora)
