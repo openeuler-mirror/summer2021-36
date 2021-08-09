@@ -374,10 +374,9 @@ make
 ## 2. rocm_smi_lib单元测试
 rocm_smi_lib单元测试主要测试rocm_smi对GPU硬件的管理和信息获取，编译与使用如下
 ```
-sudo ln -s /opt/rocm/rocm_smi/include/rocm_smi ./rocm_smi
 cd rocm_smi_lib/tests/rocm_smi_test
 mkdir build && cd build
-cmake -DROCM_DIR=/opt/rocm ..
+cmake -DROCM_DIR=/opt/rocm/rocm_smi ..
 make
 sudo ./rsmitst64
 ```
