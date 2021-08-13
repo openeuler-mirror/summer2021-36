@@ -7,7 +7,7 @@ PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 KERNEL_BRANCH=
 KERNEL_VER=5.10
 arch=x86_64
-download_kernel=false
+download_kernel=true
 
 # #################################################
 # helper functions

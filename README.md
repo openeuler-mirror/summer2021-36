@@ -2,7 +2,7 @@
 
 # 介绍
 https://gitee.com/openeuler-competition/summer-2021/issues/I3EEN1
-AMD ROCm™ 开放式生态系统是AMD为加速计算打造的开放式软件生态系统。它能帮助开发人员使用统一的编程框架对CPU/GPU进行开发。本项目旨在将AMD ROCm开源软件栈逐步引入openEuler实现GPU加速计算。目前，本项目主要支持最新的openEuler 21.03 x86_64版本、aarch 64版本和ROCm 4.2，已为openEuler引入ROCm运行环境、编译环境和部分应用程序库。
+AMD ROCm™ 开放式生态系统是AMD为加速计算打造的开放式软件生态系统。它能帮助开发人员使用统一的编程框架对CPU/GPU进行开发。本项目旨在将AMD ROCm开源软件栈逐步引入openEuler实现GPU加速计算。目前，本项目主要支持最新的openEuler 20.03 LTS SP2,、21.03的x86_64版本、ARM64版本和ROCm 4.2、4.3，已为openEuler引入ROCm运行环境、编译环境和部分应用程序库。
 
 # 软件架构
 ROCm由多个Project组成, 本项目逐步将这些Project引入到openEuler中，当前已引入了如下Project中的软件包：
@@ -92,7 +92,7 @@ cd summer2021-36
       --rocrand                  Build and install rocRand
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
-      --arch                     Set specific architecture (X86 or aarch64, default x86_64)
+      --arch                     Set specific architecture (X86 or ARM64, default x86_64)
       --gpu_arch                 Set specific gpu architecture (default gfx803)                      
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
