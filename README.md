@@ -70,9 +70,10 @@ cd summer2021-36
 ./build_kernel.sh
 
 //Step 2. 下载、编译、安装ROCm
-./build.sh [option]
+./build.sh -a               //自动下载、编译、安装当前支持的全部ROCm软件
+./build.sh [option]         //自选编译安装
+./build.sh                  //不加选项时仅添加环境变量、下载和安装工具
 
-//不加选项时仅添加环境变量、安装下载工具和下载ROCm软件包
 //具体选项特性如下：
       -h | --help                Print this help message
       -a | --all                 Build and install all rocm software (default)
@@ -279,7 +280,7 @@ cmake -DCMAKE_PREFIX_PATH=/opt/rocm ..
 make
 ```
 
-#### 10）rocm_smi_lib
+### 10）rocm_smi_lib
 ```
 git clone https://github.com/RadeonOpenCompute/rocm_smi_lib.git -b rocm-4.2.0
 cd rocm_smi_lib
@@ -356,7 +357,7 @@ sudo make package    //编译出rpm包
 ## 1. ROCT单元测试
 ROCT单元测试主要用于在用户层测试ROCm的驱动代码和ROCT代码。在test文件夹下有三大测试类，当前项目仅使用kfdtest，测试kfd驱动的正确性和接口代码的正确性。编译和使用方式如下：
 ```
-sudo yum install libdrm-devel libdrm_amdgpu-devel libhsakmt-devel
+sudo yum install libdrm-devel libdrm_amdgpu-devel
 cd ROCT-Thunk-Interface/test
 mkdir build && cd build
 cmake ..
