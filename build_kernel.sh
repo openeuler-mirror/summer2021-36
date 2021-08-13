@@ -88,11 +88,12 @@ if [[ "${KERNEL_VER}" == 4.19 ]]; then
     KERNEL_BRANCH=kernel-4.19
 fi
 
+<< EOF
 echo ${KERNEL_BRANCH}
 echo ${arch}
 ls ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config
+EOF
 
-<< EOF
 git checkout ${KERNEL_BRANCH}
 make mrproper
 cp ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config .config
@@ -103,4 +104,3 @@ cpus=`grep '^processor' /proc/cpuinfo | sort -u | wc -l`
 make -j${cpus}
 sudo make modules_install
 sudo make install
-EOF
