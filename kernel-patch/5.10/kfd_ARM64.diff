@@ -1,0 +1,20 @@
+diff --git a/drivers/gpu/drm/amd/amdkfd/kfd_device.c b/drivers/gpu/drm/amd/amdkfd/kfd_device.c
+index 903170e59342..1485081bff76 100644
+--- a/drivers/gpu/drm/amd/amdkfd/kfd_device.c
++++ b/drivers/gpu/drm/amd/amdkfd/kfd_device.c
+@@ -560,6 +560,7 @@ struct kfd_dev *kgd2kfd_probe(struct kgd_dev *kgd,
+ 	 * 32 and 64-bit requests are possible and must be
+ 	 * supported.
+ 	 */
++#ifdef CONFIG_X86_64
+ 	kfd->pci_atomic_requested = amdgpu_amdkfd_have_atomics_support(kgd);
+ 	if (device_info->needs_pci_atomics &&
+ 	    !kfd->pci_atomic_requested) {
+@@ -569,6 +570,7 @@ struct kfd_dev *kgd2kfd_probe(struct kgd_dev *kgd,
+ 		kfree(kfd);
+ 		return NULL;
+ 	}
++#endif
+ 
+ 	kfd->kgd = kgd;
+ 	kfd->device_info = device_info;

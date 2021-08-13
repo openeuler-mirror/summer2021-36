@@ -1,0 +1,231 @@
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd.c
+index 79bd8bd97fae..9e451e8e770a 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd.c
+@@ -80,6 +80,7 @@ void amdgpu_amdkfd_fini(void)
+ void amdgpu_amdkfd_device_probe(struct amdgpu_device *adev)
+ {
+ 	const struct kfd2kgd_calls *kfd2kgd;
++	pr_info("amdgpu_amdkfd_device_probe, asic_type: %d, kgd2kfd: %p\n", adev->asic_type, kgd2kfd);
+ 
+ 	if (!kgd2kfd)
+ 		return;
+@@ -96,6 +97,7 @@ void amdgpu_amdkfd_device_probe(struct amdgpu_device *adev)
+ 	case CHIP_FIJI:
+ 	case CHIP_POLARIS10:
+ 	case CHIP_POLARIS11:
++	case CHIP_POLARIS12:
+ 		kfd2kgd = amdgpu_amdkfd_gfx_8_0_get_functions();
+ 		break;
+ 	case CHIP_VEGA10:
+@@ -148,6 +150,7 @@ void amdgpu_amdkfd_device_init(struct amdgpu_device *adev)
+ {
+ 	int i;
+ 	int last_valid_bit;
++	pr_info("amdgpu_amdkfd_device_init, kfd: %p\n", adev->kfd);
+ 	if (adev->kfd) {
+ 		struct kgd2kfd_shared_resources gpu_resources = {
+ 			.compute_vmid_bitmap = compute_vmid_bitmap,
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+index 7f6af421d3e9..cdad03807e63 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+@@ -1595,7 +1595,7 @@ static int amdgpu_device_ip_early_init(struct amdgpu_device *adev)
+ static int amdgpu_device_ip_init(struct amdgpu_device *adev)
+ {
+ 	int i, r;
+-
++	pr_info("amdgpu_device_ip_init\n");
+ 	for (i = 0; i < adev->num_ip_blocks; i++) {
+ 		if (!adev->ip_blocks[i].status.valid)
+ 			continue;
+@@ -2321,7 +2321,7 @@ int amdgpu_device_init(struct amdgpu_device *adev,
+ 	int r, i;
+ 	bool runtime = false;
+ 	u32 max_MBps;
+-
++	pr_info("Will init amd gpu device\n");
+ 	adev->shutdown = false;
+ 	adev->dev = &pdev->dev;
+ 	adev->ddev = ddev;
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c
+index dd9b8feb3a66..5fe15accecad 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c
+@@ -86,7 +86,7 @@ int amdgpu_driver_load_kms(struct drm_device *dev, unsigned long flags)
+ {
+ 	struct amdgpu_device *adev;
+ 	int r, acpi_status;
+-
++	pr_info("Will load KMS\n");
+ 	adev = kzalloc(sizeof(struct amdgpu_device), GFP_KERNEL);
+ 	if (adev == NULL) {
+ 		return -ENOMEM;
+diff --git a/drivers/gpu/drm/amd/amdkfd/Kconfig b/drivers/gpu/drm/amd/amdkfd/Kconfig
+index 3858820a0055..9fda63159c83 100644
+--- a/drivers/gpu/drm/amd/amdkfd/Kconfig
++++ b/drivers/gpu/drm/amd/amdkfd/Kconfig
+@@ -4,8 +4,8 @@
+ 
+ config HSA_AMD
+ 	tristate "HSA kernel driver for AMD GPU devices"
+-	depends on DRM_AMDGPU && X86_64
+-	imply AMD_IOMMU_V2
++	depends on DRM_AMDGPU && (X86_64 || ARM64)
++	imply AMD_IOMMU_V2 if X86_64
+ 	select MMU_NOTIFIER
+ 	help
+ 	  Enable this if you want to use HSA features on AMD GPU devices.
+diff --git a/drivers/gpu/drm/amd/amdkfd/kfd_crat.c b/drivers/gpu/drm/amd/amdkfd/kfd_crat.c
+index ee4996029a86..1d000202f795 100644
+--- a/drivers/gpu/drm/amd/amdkfd/kfd_crat.c
++++ b/drivers/gpu/drm/amd/amdkfd/kfd_crat.c
+@@ -852,6 +852,7 @@ static int kfd_fill_mem_info_for_cpu(int numa_node_id, int *avail_size,
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_X86_64
+ static int kfd_fill_iolink_info_for_cpu(int numa_node_id, int *avail_size,
+ 				uint32_t *num_entries,
+ 				struct crat_subtype_iolink *sub_type_hdr)
+@@ -894,6 +895,7 @@ static int kfd_fill_iolink_info_for_cpu(int numa_node_id, int *avail_size,
+ 
+ 	return 0;
+ }
++#endif
+ 
+ /* kfd_create_vcrat_image_cpu - Create Virtual CRAT for CPU
+  *
+@@ -970,6 +972,7 @@ static int kfd_create_vcrat_image_cpu(void *pcrat_image, size_t *size)
+ 		sub_type_hdr = (typeof(sub_type_hdr))((char *)sub_type_hdr +
+ 			sub_type_hdr->length);
+ 
++#ifdef CONFIG_X86_64
+ 		/* Fill in Subtype: IO Link */
+ 		ret = kfd_fill_iolink_info_for_cpu(numa_node_id, &avail_size,
+ 				&entries,
+@@ -981,6 +984,7 @@ static int kfd_create_vcrat_image_cpu(void *pcrat_image, size_t *size)
+ 
+ 		sub_type_hdr = (typeof(sub_type_hdr))((char *)sub_type_hdr +
+ 				sub_type_hdr->length * entries);
++#endif
+ 
+ 		crat_table->num_domains++;
+ 	}
+diff --git a/drivers/gpu/drm/amd/amdkfd/kfd_device.c b/drivers/gpu/drm/amd/amdkfd/kfd_device.c
+index 28022d1cb0f0..cb62f6702b6a 100644
+--- a/drivers/gpu/drm/amd/amdkfd/kfd_device.c
++++ b/drivers/gpu/drm/amd/amdkfd/kfd_device.c
+@@ -209,6 +209,21 @@ static const struct kfd_device_info polaris11_device_info = {
+ 	.num_sdma_engines = 2,
+ };
+ 
++static const struct kfd_device_info polaris12_device_info = {
++	.asic_family = CHIP_POLARIS12,
++	.max_pasid_bits = 16,
++	.max_no_of_hqd  = 24,
++	.doorbell_size  = 4,
++	.ih_ring_entry_size = 4 * sizeof(uint32_t),
++	.event_interrupt_class = &event_interrupt_class_cik,
++	.num_of_watch_points = 4,
++	.mqd_size_aligned = MQD_SIZE_ALIGNED,
++	.supports_cwsr = true,
++	.needs_iommu_device = false,
++	.needs_pci_atomics = true,
++	.num_sdma_engines = 2,
++};
++
+ static const struct kfd_device_info vega10_device_info = {
+ 	.asic_family = CHIP_VEGA10,
+ 	.max_pasid_bits = 16,
+@@ -320,6 +335,14 @@ static const struct kfd_deviceid supported_devices[] = {
+ 	{ 0x67EB, &polaris11_device_info },	/* Polaris11 */
+ 	{ 0x67EF, &polaris11_device_info },	/* Polaris11 */
+ 	{ 0x67FF, &polaris11_device_info },	/* Polaris11 */
++	{ 0x6980, &polaris12_device_info },
++	{ 0x6981, &polaris12_device_info },
++	{ 0x6985, &polaris12_device_info},
++	{ 0x6986, &polaris12_device_info},
++	{ 0x6987, &polaris12_device_info},
++	{ 0x6995, &polaris12_device_info},
++	{ 0x6997, &polaris12_device_info},
++	{ 0x699F, &polaris12_device_info},
+ 	{ 0x6860, &vega10_device_info },	/* Vega10 */
+ 	{ 0x6861, &vega10_device_info },	/* Vega10 */
+ 	{ 0x6862, &vega10_device_info },	/* Vega10 */
+@@ -350,6 +373,7 @@ static const struct kfd_device_info *lookup_device_info(unsigned short did)
+ 	for (i = 0; i < ARRAY_SIZE(supported_devices); i++) {
+ 		if (supported_devices[i].did == did) {
+ 			WARN_ON(!supported_devices[i].device_info);
++			printk(KERN_INFO " find device, DID: %04x\n", did);
+ 			return supported_devices[i].device_info;
+ 		}
+ 	}
+@@ -367,12 +391,13 @@ struct kfd_dev *kgd2kfd_probe(struct kgd_dev *kgd,
+ 	int ret;
+ 	const struct kfd_device_info *device_info =
+ 					lookup_device_info(pdev->device);
+-
++	pr_info("kgd2kfd_probe, device_info: %p, did: 0x%x\n", device_info, pdev->device);
+ 	if (!device_info) {
+ 		dev_err(kfd_device, "kgd2kfd_probe failed\n");
+ 		return NULL;
+ 	}
+ 
++#ifdef CONFIG_X86_64
+ 	/* Allow BIF to recode atomics to PCIe 3.0 AtomicOps.
+ 	 * 32 and 64-bit requests are possible and must be
+ 	 * supported.
+@@ -386,6 +411,7 @@ struct kfd_dev *kgd2kfd_probe(struct kgd_dev *kgd,
+ 			 pdev->vendor, pdev->device);
+ 		return NULL;
+ 	}
++#endif
+ 
+ 	kfd = kzalloc(sizeof(*kfd), GFP_KERNEL);
+ 	if (!kfd)
+@@ -425,7 +451,7 @@ bool kgd2kfd_device_init(struct kfd_dev *kfd,
+ 			 const struct kgd2kfd_shared_resources *gpu_resources)
+ {
+ 	unsigned int size;
+-
++	pr_info("kgd2kfd_device_init\n");
+ 	kfd->shared_resources = *gpu_resources;
+ 
+ 	kfd->vm_info.first_vmid_kfd = ffs(gpu_resources->compute_vmid_bitmap)-1;
+diff --git a/drivers/gpu/drm/amd/amdkfd/kfd_topology.c b/drivers/gpu/drm/amd/amdkfd/kfd_topology.c
+index 5cf499a07806..5d110aff44bd 100644
+--- a/drivers/gpu/drm/amd/amdkfd/kfd_topology.c
++++ b/drivers/gpu/drm/amd/amdkfd/kfd_topology.c
+@@ -1169,7 +1169,7 @@ int kfd_topology_add_device(struct kfd_dev *gpu)
+ 
+ 	gpu_id = kfd_generate_gpu_id(gpu);
+ 
+-	pr_debug("Adding new GPU (ID: 0x%x) to topology\n", gpu_id);
++	pr_info("Adding new GPU (ID: 0x%x) to topology\n", gpu_id);
+ 
+ 	proximity_domain = atomic_inc_return(&topology_crat_proximity_domain);
+ 
+@@ -1360,7 +1360,6 @@ int kfd_topology_enum_kfd_devices(uint8_t idx, struct kfd_dev **kdev)
+ 
+ static int kfd_cpumask_to_apic_id(const struct cpumask *cpumask)
+ {
+-	const struct cpuinfo_x86 *cpuinfo;
+ 	int first_cpu_of_numa_node;
+ 
+ 	if (!cpumask || cpumask == cpu_none_mask)
+@@ -1368,9 +1367,11 @@ static int kfd_cpumask_to_apic_id(const struct cpumask *cpumask)
+ 	first_cpu_of_numa_node = cpumask_first(cpumask);
+ 	if (first_cpu_of_numa_node >= nr_cpu_ids)
+ 		return -1;
+-	cpuinfo = &cpu_data(first_cpu_of_numa_node);
+-
+-	return cpuinfo->apicid;
++#if defined(CONFIG_X86_64)
++	return cpu_data(first_cpu_of_numa_node).apicid;
++#elif defined(CONFIG_ARM64)
++	return first_cpu_of_numa_node;
++#endif
+ }
+ 
+ /* kfd_numa_node_to_apic_id - Returns the APIC ID of the first logical processor
