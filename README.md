@@ -82,7 +82,7 @@ cd summer2021-36
 
 + **Step 2. 下载、编译、安装ROCm**
 ```
-./build.sh -a               //自动下载、编译、安装当前支持的全部ROCm软件
+./build.sh -a               //自动下载、编译、安装当前支持的全部ROCm软件，建议第一次编译采用-a选项
 ./build.sh [option]         //自选编译安装
 ./build.sh                  //不加选项时仅添加环境变量、下载和安装工具
 
@@ -108,6 +108,19 @@ cd summer2021-36
       --gpu_arch                 Set specific gpu architecture (all, gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default all)                      
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
+```
+
++ **Step 3. 测试ROCm**
+```
+./test.sh [option]            //自选测试，不加选项，什么也不会测试
+//具体选项如下
+      -h | --help                Print this help message
+      -a | --all                 Test all
+      --kfdtest                  Test kfd driver and ROCT
+      --rocm_smi_test            Test rocm smi lib
+      --rocm_bw_test             Test rocm bandwidth
+      --hiptest                  Test HIP
+      --cudatest                 Test CUDA （目前暂时没有提供完整的CUDA测试）
 ```
 
 ## 2. 自行下载软件包与分步编译
