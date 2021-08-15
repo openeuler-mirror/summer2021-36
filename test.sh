@@ -6,10 +6,11 @@
 PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 kfdtest_dir=${PROJECT_DIR}/ROCm/ROCT-Thunk-Interface/tests/kfdtest
 rocm_smi_test_dir=${PROJECT_DIR}/ROCm/rocm_smi_lib/tests/rocm_smi_test
-hiptest_dir=${PROJECT_DIR}/tests/hiptest
-cudatest_dir=${PROJECT_DIR}/tests/cudatest
+rocm_bw_test_dir=${PROJECT_DIR}/ROCm/rocm_bandwidth_test
+tests_dir=${PROJECT_DIR}/tests
 kfdtest=false
 rocm_smi_test=false
+rocm_bw_test=false
 hiptest=false
 cudatest=false
 all=false
@@ -27,6 +28,7 @@ Test helper script
       -a | --all                 Test all
       --kfdtest                  Test kfd driver and ROCT
       --rocm_smi_test            Test rocm smi lib
+      --rocm_bw_test             Test rocm bandwidth
       --hiptest                  Test HIP
       --cudatest                 Test CUDA
 EOF
@@ -57,9 +59,24 @@ function func_rocm_smi_test()
     sudo ./rsmitst64
 }
 
+function func_rocm_bw_test()
+{
+    printf "Will test rocm bandwdith\n"
+    cd ${rocm_bw_test_dir}
+    mkdir -p build && cd build
+    rm -rf *
+    CXX=hipcc CXXFLAGS=--rocm-path=/opt/rocm cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=gfx803 -DCMAKE_INSTALL_PATH=/opt/rocm ..
+    make
+    ./rocm-bandwidth-test
+}
+
 function func_hiptest()
 {
     printf "Will test HIP\n"
+    cd ${tests_dir}
+    git clone https://github.com.cnpmjs.org/ROCm-Developer-Tools/HIP-Examples.git
+    cd HIP-Examples
+    ./test_all.sh
 }
 
 function func_cudatest()
@@ -73,7 +90,7 @@ function func_cudatest()
 
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,kfdtest,rocm_smi_test,hiptest,cudatest --options ha -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,kfdtest,rocm_smi_test,rocm_bw_test,hiptest,cudatest --options ha -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -101,6 +118,9 @@ while true; do
     --rocm_smi_test)
         rocm_smi_test=true
         shift ;;
+    --rocm_bw_test)
+        rocm_bw_test=true
+        shift ;;
     --hiptest)
         hiptest=true
         shift ;;
@@ -117,10 +137,12 @@ done
 # Begin test
 printf "Will begin test\n"
 set -x
+mkdir -p ${tests_dir}
 
 if [[ "${all}" == true ]]; then
     kfdtest=true
     rocm_smi_test=true
+    rocm_bw_test=true
     hiptest=true
     cudatest=true
 fi
@@ -131,6 +153,10 @@ fi
 
 if [[ "${rocm_smi_test}" == true ]]; then
     func_rocm_smi_test
+fi
+
+if [[ "${rocm_bw_test}" == true ]]; then
+    func_rocm_bw_test
 fi
 
 if [[ "${hiptest}" == true ]]; then
