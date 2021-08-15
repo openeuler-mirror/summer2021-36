@@ -15,7 +15,7 @@ download_kernel=true
 function display_help()
 {
 cat <<EOF
-rocBLAS build & installation helper script
+Linux kernel build & installation helper script
   $0 <options>
       -h | --help                Print this help message
       -d | --download            Download openEuler kernel

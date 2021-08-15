@@ -61,15 +61,27 @@ rocBlAS是ROCm的线性代数库，它依赖rocRand。
 在x86下，几乎不需要修改任何代码，就可以把ROCm的软件包编译并移植进openEuler。本项目提供如下两种方式对相关软件包进行编译安装
 ## 1. 使用本项目提供的脚本自动下载、编译、安装
 本项目提供完整的下载、编译、安装的自动化编译脚本，具体使用方法如下：
+
++ **Step 0. 获取本项目**
 ```
 git clone https://gitlab.summer-ospp.ac.cn/summer2021/210010058 或者 
 git clone https://gitee.com/openeuler-competition/summer2021-36
 cd summer2021-36
+```
++ **Step 1. 下载、编译、安装内核**
+```
+./build_kernel.sh           //默认编译x86平台，5.10内核
+./build_kernel.sh [option]  //自选编译安装
 
-//Step 1. 下载、编译、安装内核
-./build_kernel.sh
+//具体选项特性如下：
+      -h | --help                Print this help message
+      -d | --download            Download openEuler kernel
+      --arch                     Set specific architecture (x86_64 or ARM64, default x86_64)
+      -v | --kernel-version      Set specific rocm version to build (4.19 or 5.10, default 5.10)
+```
 
-//Step 2. 下载、编译、安装ROCm
++ **Step 2. 下载、编译、安装ROCm**
+```
 ./build.sh -a               //自动下载、编译、安装当前支持的全部ROCm软件
 ./build.sh [option]         //自选编译安装
 ./build.sh                  //不加选项时仅添加环境变量、下载和安装工具
