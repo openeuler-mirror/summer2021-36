@@ -40,7 +40,8 @@ build_rocmvs=false
 build_all=false
 download_rocm=false
 arch=X86
-gpu_arch=gfx803
+gpu_arch=all
+#gpu_arch=gfx803
 
 # #################################################
 # helper functions
@@ -68,7 +69,7 @@ rocBLAS build & installation helper script
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
       --arch                     Set specific architecture (X86 or ARM64, default x86_64)
-      --gpu_arch                 Set specific gpu architecture (default gfx803)                      
+      --gpu_arch                 Set specific gpu architecture (all, gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default all)                      
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
 EOF
@@ -309,7 +310,7 @@ build_install_all()
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,download,roct,llvm,rocm_dev,rocr,rocm_cs,rocm_cmake,rocclr,hip,rocminfo,rocm_smi,rocm_bw,rocrand,rocblas,rocmvs,arch:,prefix:,rocm-version:, --options hdav: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,download,roct,llvm,rocm_dev,rocr,rocm_cs,rocm_cmake,rocclr,hip,rocminfo,rocm_smi,rocm_bw,rocrand,rocblas,rocmvs,arch:,gpu_arch:,prefix:,rocm-version:, --options hdav: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -384,6 +385,9 @@ while true; do
         shift 2 ;;
     --arch)
         arch=${2}
+        shift 2 ;;
+    --gpu_arch)
+        gpu_arch=${2}
         shift 2 ;;
     --) shift ; break ;;
     *)  echo "Unexpected command line parameter received; aborting";

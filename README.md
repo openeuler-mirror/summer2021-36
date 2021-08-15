@@ -105,7 +105,7 @@ cd summer2021-36
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
       --arch                     Set specific architecture (X86 or ARM64, default x86_64)
-      --gpu_arch                 Set specific gpu architecture (default gfx803)                      
+      --gpu_arch                 Set specific gpu architecture (all, gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default all)                      
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
 ```
