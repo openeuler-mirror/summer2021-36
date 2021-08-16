@@ -145,7 +145,7 @@ build_install_rocr()
         printf "Will build and install ROCR-Runtime\n"
         cd ${ROCR_DIR}/src
         mkdir -p build && cd build
-        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
+        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_BUILD_TYPE=Release ..
         make
         sudo make install
 }

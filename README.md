@@ -229,7 +229,8 @@ sudo make install
 cd ROCR-Runtime/src
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=/opt/rocm ..
+cmake -DCMAKE_INSTALL_PREFIX=/opt/rocm -DCMAKE_BUILD_TYPE=Release ..
+//-DCMAKE_BUILD_TYPE=Release will fix the problem "LoadLib(libhsa-amd-aqlprofile64.so) failed: libhsa-amd-aqlprofile64.so: cannot open shared object file: No such file or directory"
 make
 sudo make install
 ```
