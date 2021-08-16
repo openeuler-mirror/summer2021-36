@@ -7,7 +7,7 @@ PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 kfdtest_dir=${PROJECT_DIR}/ROCm/ROCT-Thunk-Interface/tests/kfdtest
 rocm_smi_test_dir=${PROJECT_DIR}/ROCm/rocm_smi_lib/tests/rocm_smi_test
 rocm_bw_test_dir=${PROJECT_DIR}/ROCm/rocm_bandwidth_test
-tests_dir=${PROJECT_DIR}/tests
+hip_test_dir=${PROJECT_DIR}/ROCm/HIP-Examples
 kfdtest=false
 rocm_smi_test=false
 rocm_bw_test=false
@@ -73,9 +73,7 @@ function func_rocm_bw_test()
 function func_hiptest()
 {
     printf "Will test HIP\n"
-    cd ${tests_dir}
-    git clone https://github.com.cnpmjs.org/ROCm-Developer-Tools/HIP-Examples.git
-    cd HIP-Examples
+    cd ${hip_test_dir}
     ./test_all.sh
 }
 
@@ -137,7 +135,6 @@ done
 # Begin test
 printf "Will begin test\n"
 set -x
-mkdir -p ${tests_dir}
 
 if [[ "${all}" == true ]]; then
     kfdtest=true

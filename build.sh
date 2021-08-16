@@ -10,6 +10,8 @@ ROCT_DIR=${ROCm_DIR}/ROCT-Thunk-Interface
 LLVM_DIR=${ROCm_DIR}/llvm-project
 ROCM_DEV_LIBS_DIR=${ROCm_DIR}/ROCm-Device-Libs
 ROCR_DIR=${ROCm_DIR}/ROCR-Runtime
+roctracer_dir=${ROCm_DIR}/roctracer
+rocprofiler_dir=${ROCm_DIR}/rocprofiler
 ROCM_CS_DIR=${ROCm_DIR}/ROCm-CompilerSupport
 ROCM_CMAKE_DIR=${ROCm_DIR}/rocm-cmake
 ROCCLR_DIR=${ROCm_DIR}/ROCclr
@@ -27,6 +29,8 @@ build_roct=false
 build_llvm=false
 build_rocm_dev=false
 build_rocr=false
+build_roctracer=false
+build_rocprofiler=false
 build_rocm_cs=false
 build_rocm_cmake=false
 build_rocclr=false
@@ -62,6 +66,8 @@ rocBLAS build & installation helper script
       --rocm_cmake               Build and install rocm_cmake
       --rocclr                   Build and install ROCclr
       --hip                      Build and install HIP
+      --roctracer                Build and install roctracer (need hip)
+      --rocprofiler              Build and install rocprofiler (need roctracer)
       --rocminfo                 Build and install rocminfo
       --rocm_smi                 Build and install rocm_smi_lib
       --rocm_bw                  Build and install rocm_bandwidth_test
@@ -141,6 +147,34 @@ build_install_rocr()
         mkdir -p build && cd build
         cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
+        sudo make install
+}
+
+build_install_roctracer()
+{
+     printf "Will build and install roctracer\n"  
+     pip install CppHeaderParser argparse 
+     cd ${roctracer_dir}
+     git checkout test/CMakeLists.txt
+     git apply ${PROJECT_DIR}/rocm-4.2.0-patch/roctracer/test_CMakeLists.diff
+ #    mkdir -p build && cd build
+     export ROCM_PATH=${ROCM_INSTALL_PATH}
+     export HIP_PATH=/opt/rocm/hip
+     export HIP_VDI=1
+     ./build.sh
+ #    cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} ..
+ #    make
+     cd build
+     sudo make install
+}
+
+build_install_rocprofiler()
+{
+        printf "Will build and install rocprofiler\n"       
+        cd ${rocprofiler_dir}
+        mkdir -p build && cd build
+        cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH}include/hsa:${ROCM_INSTALL_PATH} ..
+        make 
         sudo make install
 }
 
@@ -295,6 +329,8 @@ build_install_all()
         build_install_rocm_cmake
         build_install_rocclr
         build_install_hip
+        build_install_roctracer
+        build_install_rocprofiler
         build_install_rocminfo
         build_install_rocm_smi
         build_install_rocm_bw
@@ -310,7 +346,7 @@ build_install_all()
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,download,roct,llvm,rocm_dev,rocr,rocm_cs,rocm_cmake,rocclr,hip,rocminfo,rocm_smi,rocm_bw,rocrand,rocblas,rocmvs,arch:,gpu_arch:,prefix:,rocm-version:, --options hdav: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,download,roct,llvm,rocm_dev,rocr,roctracer,rocprofiler,rocm_cs,rocm_cmake,rocclr,hip,rocminfo,rocm_smi,rocm_bw,rocrand,rocblas,rocmvs,arch:,gpu_arch:,prefix:,rocm-version:, --options hdav: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -347,6 +383,12 @@ while true; do
     --rocr)
         build_rocr=true
         shift ;;
+    --roctracer)
+        build_roctracer=true
+        shift ;;
+    --rocprofiler)
+        build_rocprofiler=true
+        shift ;;
     --rocm_cs)
         build_rocm_cs=true
         shift ;;
@@ -359,8 +401,8 @@ while true; do
     --hip)
         build_hip=true
         shift ;;
-    --rocminfo)
-        build_rocminfo=true
+    --hip)
+        build_hip=true
         shift ;;
     --rocm_smi)
         build_rocm_smi=true
@@ -412,13 +454,13 @@ fi
 
 if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
         ROCm_BRANCH=roc-4.2.x
-        ROCm_NUMS=15
+        ROCm_NUMS=18
         echo "Build and install rocm-4.2.0"
 fi
 
 if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
         ROCm_BRANCH=roc-4.3.x
-        ROCm_NUMS=15
+        ROCm_NUMS=18
         echo "Build and install rocm-4.3.0"
 fi
 
@@ -474,6 +516,16 @@ fi
 if [[ "${build_hip}" == true ]]; then
         build_all=false
         build_install_hip
+fi
+
+if [[ "${build_roctracer}" == true ]]; then
+        build_all=false
+        build_install_roctracer
+fi
+
+if [[ "${build_rocprofiler}" == true ]]; then
+        build_all=false
+        build_install_rocprofiler
 fi
 
 if [[ "${build_rocminfo}" == true ]]; then
