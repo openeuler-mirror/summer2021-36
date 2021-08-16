@@ -23,6 +23,7 @@ fetch="https://github.com.cnpmjs.org/KhronosGroup/" />
     <project name="rocm-cmake" />
     <project name="rocminfo" /> 
     <project name="rocprofiler" remote="rocm-devtools" />
+    <project name="roctracer" remote="rocm-devtools" />
     <project name="ROCm-OpenCL-Runtime" />
 <!--HIP Projects-->
     <project name="HIP" remote="rocm-devtools" />
