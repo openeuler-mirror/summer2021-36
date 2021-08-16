@@ -22,9 +22,11 @@ fetch="https://github.com.cnpmjs.org/KhronosGroup/" />
     <project name="rocm_smi_lib" />
     <project name="rocm-cmake" />
     <project name="rocminfo" /> 
+    <project name="rocprofiler" remote="rocm-devtools" />
     <project name="ROCm-OpenCL-Runtime" />
 <!--HIP Projects-->
     <project name="HIP" remote="rocm-devtools" />
+    <project name="HIP-Examples" remote="rocm-devtools" />
     <project name="ROCclr" remote="rocm-devtools" />
 <!-- The following projects are all associated with the AMDGPU LLVM compiler -->
     <project name="ROCm-Device-Libs" />
