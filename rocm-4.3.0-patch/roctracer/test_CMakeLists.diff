@@ -1,0 +1,13 @@
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index e07e7d8..bd3c114 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -70,7 +70,7 @@ add_custom_target( mytest
+ )
+ 
+ ## Build HSA test
+-execute_process ( COMMAND sh -xc "if [ ! -e ${TEST_DIR}/hsa ] ; then git clone https://github.com/ROCmSoftwarePlatform/hsa-class.git ${TEST_DIR}/hsa; fi" )
++execute_process ( COMMAND sh -xc "if [ ! -e ${TEST_DIR}/hsa ] ; then git clone https://github.com.cnpmjs.org/ROCmSoftwarePlatform/hsa-class.git ${TEST_DIR}/hsa; fi" )
+ execute_process ( COMMAND sh -xc "if [ -e ${TEST_DIR}/hsa ] ; then cd ${TEST_DIR}/hsa && git fetch origin && git checkout ${HSA_REV}; fi" )
+ set ( TMP ${TEST_DIR} )
+ set ( TEST_DIR ${HSA_TEST_DIR} )

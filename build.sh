@@ -154,9 +154,9 @@ build_install_roctracer()
 {
      printf "Will build and install roctracer\n"  
      pip install CppHeaderParser argparse 
-     cd ${roctracer_dir}
+     cd ${roctracer_dir} 
      git checkout test/CMakeLists.txt
-     git apply ${PROJECT_DIR}/rocm-4.2.0-patch/roctracer/test_CMakeLists.diff
+     git apply ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/test_CMakeLists.diff
  #    mkdir -p build && cd build
      export ROCM_PATH=${ROCM_INSTALL_PATH}
      export HIP_PATH=/opt/rocm/hip
