@@ -226,7 +226,7 @@ build_install_hip()
         make
         sudo make install
 
-        if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
+        if [[ "${ROCm_VER}" == rocm-4.2.0 ]] || [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
                 HIPFLAGS=`grep -nr '$HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' "' ${ROCM_INSTALL_PATH}/hip/bin/hipcc`
 
                 if [[ ! ${HIPFLAGS} ]]; then     
