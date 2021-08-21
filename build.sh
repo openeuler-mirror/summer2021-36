@@ -181,6 +181,10 @@ build_install_rocprofiler()
 build_install_rocm_cs()
 {
         printf "Will build and install ROCm-CompilerSupport\n"
+        if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
+                cd ${ROCM_CS_DIR}
+                git apply ${PROJECT_DIR}/rocm-4.3.0-patch/ROCm-CompilerSupport/rocm_cs.diff
+        fi
         cd ${ROCM_CS_DIR}/lib/comgr
         mkdir -p build && cd build
         export LLVM_PROJECT=${ROCM_INSTALL_PATH}/llvm
