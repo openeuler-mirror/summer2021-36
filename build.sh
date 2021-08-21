@@ -44,8 +44,8 @@ build_rocmvs=false
 build_all=false
 download_rocm=false
 arch=X86
-gpu_arch=all
-#gpu_arch=gfx803
+#gpu_arch=all
+gpu_arch=gfx803
 
 # #################################################
 # helper functions
@@ -75,7 +75,7 @@ rocBLAS build & installation helper script
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
       --arch                     Set specific architecture (X86 or ARM64, default x86_64)
-      --gpu_arch                 Set specific gpu architecture (all, gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default all)                      
+      --gpu_arch                 Set specific gpu architecture (gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default gfx803)
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
 EOF
@@ -273,7 +273,7 @@ build_install_rocrand()
 {
         printf "Will build and install rocRand\n"
         cd ${rocRand_dir}
-        mkdir -p build && cd build
+        mkdir -p build && cd build && rm *
         CXX=hipcc CXXFLAGS=--rocm-path=${ROCM_INSTALL_PATH} cmake -DBUILD_BENCHMARK=ON -D AMDGPU_TARGETS=${gpu_arch} -DCMAKE_INSTALL_PATH=${ROCM_INSTALL_PATH} ..
         make
         sudo make install
@@ -405,8 +405,8 @@ while true; do
     --hip)
         build_hip=true
         shift ;;
-    --hip)
-        build_hip=true
+    --rocminfo)
+        build_rocminfo=true
         shift ;;
     --rocm_smi)
         build_rocm_smi=true
