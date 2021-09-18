@@ -12,7 +12,7 @@ index 4c33a68e..1f96ad35 100644
      endif()
      message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
 diff --git a/install.sh b/install.sh
-index 71580347..cb64b02e 100755
+index 71580347..ed30cda8 100755
 --- a/install.sh
 +++ b/install.sh
 @@ -56,10 +56,10 @@ supported_distro( )
@@ -56,7 +56,7 @@ index 71580347..cb64b02e 100755
    local client_dependencies_fedora=( "gcc-gfortran" "libgomp" "boost-devel" )
    local client_dependencies_sles=( "gcc-fortran" "libgomp1" "libboost_program_options1_66_0-devel" )
  
-@@ -224,8 +229,15 @@ install_packages( )
+@@ -224,8 +229,16 @@ install_packages( )
        fi
        ;;
  
@@ -66,6 +66,7 @@ index 71580347..cb64b02e 100755
 +      if [[ "${build_clients}" == true ]]; then
 +        install_yum_packages "${client_dependencies_openEuler[@]}"
 +      fi
++      ;;
 +
      centos|rhel)
 -      if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
@@ -73,7 +74,16 @@ index 71580347..cb64b02e 100755
          install_yum_packages "${library_dependencies_centos_rhel_8[@]}"
  
          if [[ "${build_clients}" == true ]]; then
-@@ -293,7 +305,7 @@ fi
+@@ -260,7 +273,7 @@ install_packages( )
+         fi
+         ;;
+     *)
+-      echo "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, and Fedora"
++      echo "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, openEuler and Fedora"
+       exit 2
+       ;;
+   esac
+@@ -293,7 +306,7 @@ fi
  
  # The following function exits script if an unsupported distro is detected
  supported_distro
@@ -82,7 +92,7 @@ index 71580347..cb64b02e 100755
  # #################################################
  # global variables
  # #################################################
-@@ -485,7 +497,7 @@ install_blis()
+@@ -485,7 +498,7 @@ install_blis()
      #Download prebuilt AMD multithreaded blis
      if [[ "${cpu_ref_lib}" == blis ]] && [[ ! -e "./blis/lib/libblis.so" ]]; then
        case "${ID}" in
@@ -91,7 +101,7 @@ index 71580347..cb64b02e 100755
                wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
                ;;
            ubuntu)
-@@ -520,7 +532,7 @@ fi
+@@ -520,7 +533,7 @@ fi
  cmake_executable=cmake
  
  case "${ID}" in
@@ -100,7 +110,7 @@ index 71580347..cb64b02e 100755
    cmake_executable=cmake3
    ;;
  esac
-@@ -671,9 +683,9 @@ pushd .
+@@ -671,9 +684,9 @@ pushd .
  
    # Build library with AMD toolchain because of existense of device kernels
    if [[ "${build_clients}" == true ]]; then
@@ -112,7 +122,7 @@ index 71580347..cb64b02e 100755
    fi
    check_exit_code "$?"
  
-@@ -696,7 +708,7 @@ pushd .
+@@ -696,7 +709,7 @@ pushd .
        ubuntu)
          elevate_if_not_root dpkg -i rocblas[_\-]*.deb
        ;;

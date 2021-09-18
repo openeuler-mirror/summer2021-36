@@ -183,6 +183,7 @@ build_install_rocm_cs()
         printf "Will build and install ROCm-CompilerSupport\n"
         if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
                 cd ${ROCM_CS_DIR}
+                git checkout lib/comgr/src/comgr-objdump.cpp
                 git apply ${PROJECT_DIR}/rocm-4.3.0-patch/ROCm-CompilerSupport/rocm_cs.diff
         fi
         cd ${ROCM_CS_DIR}/lib/comgr
@@ -282,23 +283,10 @@ build_install_rocrand()
 build_install_rocblas()
 {
         printf "Will build and install rocBLAS\n"
-        sudo yum install boost-devel
-        cd ~/
-        git clone https://github.com.cnpmjs.org/msgpack/msgpack-c.git
-        cd msgpack-c
-        git checkout c_master
-        cmake .
-        make
-        sudo make install
-        
-        git checkout cpp_master
-        cmake -DMSGPACK_CXX11=ON .
-        make 
-        sudo make install
-        
         cd ${rocBLAS_dir}
+        git checkout CMakeLists.txt install.sh 
         git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocBLAS/rocBLAS.diff
-        ./install.sh
+        ./install.sh -idc -a ${gpu_arch}
         sudo cp -rf build/release/rocblas-install/rocblas/include/* ${ROCM_INSTALL_PATH}/include
         sudo cp -rf build/release/rocblas-install/rocblas/lib/* ${ROCM_INSTALL_PATH}/lib
 }
@@ -309,6 +297,7 @@ build_install_rocmvs()
         sudo yum install doxygen pciutils-devel
 
         cd ${ROCmValidationSuite_DIR}
+        git checkout CMakeGtestDownload.cmake CMakeLists.txt CMakeYamlDownload.cmake
         git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCmValidationSuite/ROCmValidationSuite.diff
 
  #       if [[ "${ROCm_VER}" == rocm-4.2.0 ]]; then
