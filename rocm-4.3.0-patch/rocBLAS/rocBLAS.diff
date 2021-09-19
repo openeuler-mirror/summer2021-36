@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 4c33a68e..1f96ad35 100644
+index 4c33a68e..cd45e4e9 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -220,7 +220,7 @@ if(NOT SKIP_LIBRARY)
@@ -7,12 +7,38 @@ index 4c33a68e..1f96ad35 100644
        file (STRINGS "tensile_tag.txt" read_tensile_tag)
        set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
 -      virtualenv_install("git+https://github.com/${tensile_fork}/Tensile.git@${tensile_tag}")
-+      virtualenv_install("git+https://gitee.com/huangyizhitt/Tensile.git@${tensile_tag}")
++      virtualenv_install("git+https://github.com.cnpmjs.org/${tensile_fork}/Tensile.git@${tensile_tag}")
        message (STATUS "using GIT Tensile fork=${tensile_fork} from branch=${tensile_tag}")
      endif()
      message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
+diff --git a/deps/external-gtest.cmake b/deps/external-gtest.cmake
+index 90578307..7054c7b9 100644
+--- a/deps/external-gtest.cmake
++++ b/deps/external-gtest.cmake
+@@ -10,7 +10,7 @@ set( PREFIX_GTEST ${CMAKE_INSTALL_PREFIX} CACHE PATH "Location where boost shoul
+ set( gtest_cmake_args -DCMAKE_INSTALL_PREFIX=${PREFIX_GTEST} )
+ append_cmake_cli_arguments( gtest_cmake_args gtest_cmake_args )
+ 
+-set( gtest_git_repository "https://github.com/google/googletest.git" CACHE STRING "URL to download gtest from" )
++set( gtest_git_repository "https://github.com.cnpmjs.org/google/googletest.git" CACHE STRING "URL to download gtest from" )
+ set( gtest_git_tag "release-1.10.0" CACHE STRING "URL to download gtest from" )
+ 
+ if( MSVC )
+diff --git a/deps/external-lapack.cmake b/deps/external-lapack.cmake
+index 2878d2d8..12f78769 100644
+--- a/deps/external-lapack.cmake
++++ b/deps/external-lapack.cmake
+@@ -10,7 +10,7 @@ set( PREFIX_LAPACK ${CMAKE_INSTALL_PREFIX} CACHE PATH "Location where lapack sho
+ set( lapack_cmake_args -DCMAKE_INSTALL_PREFIX=${PREFIX_LAPACK} )
+ append_cmake_cli_arguments( lapack_cmake_args lapack_cmake_args )
+ 
+-set( lapack_git_repository "https://github.com/Reference-LAPACK/lapack-release" CACHE STRING "URL to download lapack from" )
++set( lapack_git_repository "https://github.com.cnpmjs.org/Reference-LAPACK/lapack-release" CACHE STRING "URL to download lapack from" )
+ set( lapack_git_tag "lapack-3.7.1" CACHE STRING "git branch" )
+ 
+ # message( STATUS "lapack_make ( " ${lapack_make} " ) " )
 diff --git a/install.sh b/install.sh
-index 71580347..ed30cda8 100755
+index 71580347..1a1efbf4 100755
 --- a/install.sh
 +++ b/install.sh
 @@ -56,10 +56,10 @@ supported_distro( )
@@ -28,17 +54,26 @@ index 71580347..ed30cda8 100755
          exit 2
          ;;
    esac
-@@ -177,6 +177,10 @@ install_packages( )
-                                       "make" "cmake3" "rpm-build"
-                                       "python3" "python3*-PyYAML" "python3-virtualenv"
-                                       "gcc-c++" "wget" )
-+  local library_dependencies_openEuler=( "epel-release" "openssl-devel"
+@@ -140,7 +140,7 @@ install_msgpack_from_source( )
+       pushd .
+       mkdir -p ${build_dir}/deps
+       cd ${build_dir}/deps
+-      git clone -b cpp-3.0.1 https://github.com/msgpack/msgpack-c.git
++      git clone -b cpp-3.0.1 https://github.com.cnpmjs.org/msgpack/msgpack-c.git
+       cd msgpack-c
+       CXX=${cxx} CC=${cc} ${cmake_executable} -DMSGPACK_BUILD_TESTS=OFF -DMSGPACK_BUILD_EXAMPLES=OFF .
+       make
+@@ -182,6 +182,10 @@ install_packages( )
+                                       "gcc-c++" "libcxx-devel" "wget" )
+   local library_dependencies_sles=(   "make" "cmake" "libopenssl-devel" "python3-PyYAML" "python3-virtualenv"
+                                       "gcc-c++" "libcxxtools9" "rpm-build" "wget" )
++  local library_dependencies_openEuler=( "openssl-devel"
 +                                      "make" "cmake3" "rpm-build"
 +                                      "python3" "python3*-PyYAML" "python3-virtualenv"
 +                                      "gcc-c++" "wget" )
-   local library_dependencies_fedora=( "make" "cmake" "rpm-build"
-                                       "python34" "python3*-PyYAML" "python3-virtualenv"
-                                       "gcc-c++" "libcxx-devel" "wget" )
+ 
+   if [[ "${tensile_msgpack_backend}" == true ]]; then
+     library_dependencies_ubuntu+=("libmsgpack-dev")
 @@ -200,7 +204,7 @@ install_packages( )
    fi
  
@@ -48,18 +83,28 @@ index 71580347..ed30cda8 100755
        if [[ "${tensile_msgpack_backend}" == true ]]; then
          install_msgpack_from_source
        fi
-@@ -211,6 +215,7 @@ install_packages( )
-   local client_dependencies_ubuntu=( "gfortran" "libomp-dev" "libboost-program-options-dev")
-   local client_dependencies_centos_rhel=( "devtoolset-7-gcc-gfortran" "libgomp" "boost-devel" )
+@@ -213,6 +217,7 @@ install_packages( )
    local client_dependencies_centos_rhel_8=( "gcc-gfortran" "libgomp" "boost-devel" )
-+  local client_dependencies_openEuler=( "gcc-gfortran" "libgomp" "boost-devel" )
    local client_dependencies_fedora=( "gcc-gfortran" "libgomp" "boost-devel" )
    local client_dependencies_sles=( "gcc-fortran" "libgomp1" "libboost_program_options1_66_0-devel" )
++  local client_dependencies_openEuler=( "gcc-gfortran" "libgomp" "boost-devel" )
  
-@@ -224,8 +229,16 @@ install_packages( )
-       fi
+   case "${ID}" in
+     ubuntu)
+@@ -225,7 +230,7 @@ install_packages( )
        ;;
  
+     centos|rhel)
+-      if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
++	    if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
+         install_yum_packages "${library_dependencies_centos_rhel_8[@]}"
+ 
+         if [[ "${build_clients}" == true ]]; then
+@@ -259,8 +264,16 @@ install_packages( )
+             install_zypper_packages "${client_dependencies_sles[@]}"
+         fi
+         ;;
++
 +    openEuler)
 +      install_yum_packages "${library_dependencies_openEuler[@]}"
 +
@@ -67,16 +112,6 @@ index 71580347..ed30cda8 100755
 +        install_yum_packages "${client_dependencies_openEuler[@]}"
 +      fi
 +      ;;
-+
-     centos|rhel)
--      if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
-+	    if [[ ( "${VERSION_ID}" -ge 8 ) ]]; then
-         install_yum_packages "${library_dependencies_centos_rhel_8[@]}"
- 
-         if [[ "${build_clients}" == true ]]; then
-@@ -260,7 +273,7 @@ install_packages( )
-         fi
-         ;;
      *)
 -      echo "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, and Fedora"
 +      echo "This script is currently supported on Ubuntu, CentOS, RHEL, SLES, OpenSUSE-Leap, openEuler and Fedora"
@@ -92,15 +127,26 @@ index 71580347..ed30cda8 100755
  # #################################################
  # global variables
  # #################################################
-@@ -485,7 +498,7 @@ install_blis()
+@@ -485,15 +498,15 @@ install_blis()
      #Download prebuilt AMD multithreaded blis
      if [[ "${cpu_ref_lib}" == blis ]] && [[ ! -e "./blis/lib/libblis.so" ]]; then
        case "${ID}" in
 -          centos|rhel|sles|opensuse-leap)
+-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
 +          centos|rhel|sles|opensuse-leap|openEuler)
-               wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
++              wget -nv -O blis.tar.gz https://github.com.cnpmjs.org/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
                ;;
            ubuntu)
+-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
++              wget -nv -O blis.tar.gz https://github.com.cnpmjs.org/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+               ;;
+           *)
+               echo "Unsupported OS for this script"
+-              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
++              wget -nv -O blis.tar.gz https://github.com.cnpmjs.org/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+               ;;
+       esac
+ 
 @@ -520,7 +533,7 @@ fi
  cmake_executable=cmake
  
@@ -110,24 +156,12 @@ index 71580347..ed30cda8 100755
    cmake_executable=cmake3
    ;;
  esac
-@@ -671,9 +684,9 @@ pushd .
- 
-   # Build library with AMD toolchain because of existense of device kernels
-   if [[ "${build_clients}" == true ]]; then
--    CXX=${cxx} CC=${cc} FC=${fc} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
-+    CXX=${cxx} CC=${cc} FC=${fc} CXXFLAGS=--rocm-path=/opt/rocm ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
-   else
--    CXX=${cxx} CC=${cc} ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
-+    CXX=${cxx} CC=${cc} CXXFLAGS=--rocm-path=/opt/rocm ${cmake_executable} ${cmake_common_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=rocblas-install -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} ${ROCBLAS_SRC_PATH}
-   fi
-   check_exit_code "$?"
- 
-@@ -696,7 +709,7 @@ pushd .
-       ubuntu)
-         elevate_if_not_root dpkg -i rocblas[_\-]*.deb
-       ;;
--      centos|rhel)
-+      centos|rhel|openEuler)
-         elevate_if_not_root yum -y localinstall rocblas-*.rpm
-       ;;
-       fedora)
+@@ -549,7 +562,7 @@ if [[ "${install_dependencies}" == true ]]; then
+   CMAKE_VERSION=$(cmake --version | grep -oP '(?<=version )[^ ]*' )
+   if $(dpkg --compare-versions $CMAKE_VERSION lt 3.16.8); then
+       if $update_cmake == true; then
+-        CMAKE_REPO="https://github.com/Kitware/CMake/releases/download/v3.16.8/"
++        CMAKE_REPO="https://github.com.cnpmjs.org/Kitware/CMake/releases/download/v3.16.8/"
+         wget -nv ${CMAKE_REPO}/cmake-3.16.8.tar.gz
+         tar -xvf cmake-3.16.8.tar.gz
+         cd cmake-3.16.8
