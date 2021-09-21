@@ -74,7 +74,7 @@ rocBLAS build & installation helper script
       --rocrand                  Build and install rocRand
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
-      --arch                     Set specific architecture (X86 or ARM64, default x86_64)
+      --arch                     Set specific architecture (X86 or AArch64, default X86)
       --gpu_arch                 Set specific gpu architecture (gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default gfx803)
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
