@@ -277,6 +277,10 @@ build_install_rocminfo()
 {
         printf "Will build and install rocminfo\n"
         cd ${rocminfo_dir}
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocminfo/rocminfo_AArch64.diff
+        fi
         mkdir -p build
         cd build
         cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
