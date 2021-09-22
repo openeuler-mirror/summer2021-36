@@ -243,6 +243,10 @@ build_install_rocclr()
         export ROCclr_DIR="$(readlink -f ROCclr)"
         export OPENCL_DIR="$(readlink -f ROCm-OpenCL-Runtime)"
         cd "$ROCclr_DIR"
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCclr/ROCclr_AArch64.diff
+        fi
         mkdir -p build && cd build
         cmake -DOPENCL_DIR="$OPENCL_DIR" -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/rocclr ..
         make
