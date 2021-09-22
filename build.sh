@@ -43,7 +43,7 @@ build_rocblas=false
 build_rocmvs=false
 build_all=false
 download_rocm=false
-arch=X86
+arch=
 #gpu_arch=all
 gpu_arch=gfx803
 
@@ -74,7 +74,7 @@ rocBLAS build & installation helper script
       --rocrand                  Build and install rocRand
       --rocblas                  Build and install rocBLAS
       --rocmvs                   Build and install ROCmValidationSuite
-      --arch                     Set specific architecture (X86 or AArch64, default X86)
+      --arch                     Set specific architecture (X86 or AArch64, default is system detection)
       --gpu_arch                 Set specific gpu architecture (gfx000, gfx803, gfx900, gfx906:xnack-;gfx908:xnack-, default gfx803)
       --prefix                   Set specific install path to ROCm
       -v | --rocm-version        Set specific rocm version to build
@@ -100,6 +100,25 @@ env_setting()
                 sudo sed -i '$a export LD_LIBRARY_PATH='${ROCM_INSTALL_PATH}'/rocrand/lib:$LD_LIBRARY_PATH' /etc/profile
                 source /etc/profile
         fi
+}
+
+# #################################################
+# Detect the CPU arch functions
+# ################################################# 
+detect_cpu_arch()
+{
+        if [[ ! ${arch} ]]; then
+                current_arch=`uname -m`
+                if [[ "${current_arch}" == x86_64 ]] || [[ "${current_arch}" == x86 ]]; then
+                        arch=X86
+                elif [[ "${current_arch}" == aarch64 ]]; then
+                        arch=AArch64
+                else
+                        printf "Can not support current CPU architecture: %s\n" ${current_arch}
+                        exit 1
+                fi
+        fi
+        printf "Detect CPU architecture: %s\n" ${arch}
 }
 
 # #################################################
@@ -143,9 +162,21 @@ build_install_rocm_dev()
 build_install_rocr()
 {
         printf "Will build and install ROCR-Runtime\n"
-        cd ${ROCR_DIR}/src
-        mkdir -p build && cd build
-        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_BUILD_TYPE=Release ..
+        if [[ "${arch}" == X86 ]]; then
+                cd ${ROCR_DIR}/src
+                mkdir -p build && cd build
+                cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_BUILD_TYPE=Release ..
+        elif [[ "${arch}" == AArch64 ]]; then
+                cd ${ROCR_DIR}
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCR/ROCR_AArch64.diff
+                cd src
+                mkdir -p build && cd build
+                CC=clang CXX=clang++ cmake -DCMAKE_INSTALL_PREFIX=/opt/rocm -DCMAKE_BUILD_TYPE=Release ..
+        else
+                printf "Cannot the CPU architecture: " ${arch}
+                exit 1
+        fi
         make
         sudo make install
 }
@@ -434,6 +465,7 @@ done
 set -x
 
 env_setting
+detect_cpu_arch
 
 if (!(test -e /usr/bin/python)); then
         ln -s /usr/bin/python3 /usr/bin/python
