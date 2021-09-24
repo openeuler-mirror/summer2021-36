@@ -153,6 +153,12 @@ build_install_rocm_dev()
 {
         printf "Will build and install rocm_device-Libs\n"
         cd ${ROCM_DEV_LIBS_DIR}
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                if [[ "${ROCm_VER}" == rocm-4.3.0 ]]; then
+                        git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCm-Device-Libs/rocm_dev_AArch64.diff
+                fi
+        fi
         mkdir -p build && cd build
         CC=${ROCM_INSTALL_PATH}/llvm/bin/clang CXX=${ROCM_INSTALL_PATH}/llvm/bin/clang++ cmake -DLLVM_DIR=${ROCM_INSTALL_PATH}/llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_WERROR=1 -DLLVM_ENABLE_ASSERTIONS=1 -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} ..
         make
@@ -258,7 +264,14 @@ build_install_hip()
         printf "Will build and install HIP\n"
         cd ${HIP_DIR}
         mkdir -p build && cd build
-        cmake -DCMAKE_PREFIX_PATH="${ROCCLR_DIR}/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang ..
+        if [[ "${arch}" == X86 ]]; then
+                cmake -DCMAKE_PREFIX_PATH="${ROCCLR_DIR}/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang ..
+        elif [[ "${arch}" == AArch64 ]]; then
+                cmake -D__HIP_ENABLE_PCH=OFF -DCMAKE_PREFIX_PATH="${ROCCLR_DIR}/build;${ROCM_INSTALL_PATH}/" -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH}/hip -DHIP_COMPILER=clang -DHIP_PLATFORM=rocclr -DCMAKE_BUILD_TYPE=Release ..
+        else
+                printf "Can not support current CPU architecture: %s\n" ${arch}
+                exit 1
+        fi
         make
         sudo make install
 
@@ -268,7 +281,7 @@ build_install_hip()
                 if [[ ! ${HIPFLAGS} ]]; then     
                         sudo sed -i '669i $HIPCXXFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
                         sudo sed -i '670i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc
-                        sudo sed -i '671i $HIPCFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
+                        sudo sed -i '671i $HIPLDFLAGS .= " --rocm-path='${ROCM_INSTALL_PATH}' ";' ${ROCM_INSTALL_PATH}/hip/bin/hipcc 
                 fi
         fi
 }
