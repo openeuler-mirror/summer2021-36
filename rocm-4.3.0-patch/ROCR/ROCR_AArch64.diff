@@ -1,5 +1,5 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index c81b196..9758f15 100644
+index c81b196..8935b87 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -211,8 +211,7 @@ if(${IMAGE_SUPPORT})
@@ -8,12 +8,12 @@ index c81b196..9758f15 100644
      LINUX
 -    __AMD64__
 -    __x86_64__
-+    __AArch64__
++    __aarch64__
      AMD_INTERNAL_BUILD
      BRAHMA_BUILD=1 )
  
 diff --git a/src/core/runtime/amd_gpu_agent.cpp b/src/core/runtime/amd_gpu_agent.cpp
-index eb1e010..1cf6c07 100644
+index eb1e010..6f49783 100644
 --- a/src/core/runtime/amd_gpu_agent.cpp
 +++ b/src/core/runtime/amd_gpu_agent.cpp
 @@ -677,7 +677,7 @@ void GpuAgent::PreloadBlits() {
@@ -21,7 +21,7 @@ index eb1e010..1cf6c07 100644
    // Defer memory allocation until agents have been discovered.
    InitScratchPool();
 -  BindTrapHandler();
-+ // BindTrapHandler();
++//  BindTrapHandler();
    InitDma();
  
    return HSA_STATUS_SUCCESS;
@@ -39,15 +39,28 @@ index 93ad271..499d70f 100644
    loader_ = amd::hsa::loader::Loader::Create(&loader_context_);
  
 diff --git a/src/image/util.h b/src/image/util.h
-index 5eb9f3a..971fbb1 100644
+index 5eb9f3a..9f03d98 100644
 --- a/src/image/util.h
 +++ b/src/image/util.h
 @@ -74,6 +74,8 @@ namespace image {
  #include "mm_malloc.h"
  #if defined(__i386__) || defined(__x86_64__)
  #include <x86intrin.h>
-+#elif defined(__AArch64__)
++#elif defined(__aarch64__)
 +
  #else
  #error                                                                                             \
      "Processor not identified.  " \
+diff --git a/src/inc/hsa.h b/src/inc/hsa.h
+index fe1facc..3a58546 100644
+--- a/src/inc/hsa.h
++++ b/src/inc/hsa.h
+@@ -80,7 +80,7 @@
+ // Try to detect CPU endianness
+ #if !defined(LITTLEENDIAN_CPU) && !defined(BIGENDIAN_CPU)
+ #if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || \
+-    defined(_M_X64)
++    defined(_M_X64) || defined(__aarch64__)
+ #define LITTLEENDIAN_CPU
+ #endif
+ #endif
