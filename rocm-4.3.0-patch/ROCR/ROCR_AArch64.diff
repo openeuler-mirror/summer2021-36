@@ -12,32 +12,47 @@ index c81b196..8935b87 100644
      AMD_INTERNAL_BUILD
      BRAHMA_BUILD=1 )
  
-diff --git a/src/core/runtime/amd_gpu_agent.cpp b/src/core/runtime/amd_gpu_agent.cpp
-index eb1e010..6f49783 100644
---- a/src/core/runtime/amd_gpu_agent.cpp
-+++ b/src/core/runtime/amd_gpu_agent.cpp
-@@ -677,7 +677,7 @@ void GpuAgent::PreloadBlits() {
- hsa_status_t GpuAgent::PostToolsInit() {
-   // Defer memory allocation until agents have been discovered.
-   InitScratchPool();
--  BindTrapHandler();
-+//  BindTrapHandler();
-   InitDma();
+diff --git a/src/core/inc/amd_memory_region.h b/src/core/inc/amd_memory_region.h
+index cce01e6..8a39a73 100644
+--- a/src/core/inc/amd_memory_region.h
++++ b/src/core/inc/amd_memory_region.h
+@@ -187,7 +187,7 @@ class MemoryRegion : public core::MemoryRegion {
  
-   return HSA_STATUS_SUCCESS;
-diff --git a/src/core/runtime/runtime.cpp b/src/core/runtime/runtime.cpp
-index 93ad271..499d70f 100644
---- a/src/core/runtime/runtime.cpp
-+++ b/src/core/runtime/runtime.cpp
-@@ -1353,7 +1353,7 @@ hsa_status_t Runtime::Load() {
-     sys_clock_freq_ = clocks.SystemClockFrequencyHz;
-   }
+   mutable KernelMutex access_lock_;
  
--  BindVmFaultHandler();
-+ // BindVmFaultHandler();
+-  static const size_t kPageSize_ = 4096;
++  static size_t kPageSize_;
  
-   loader_ = amd::hsa::loader::Loader::Create(&loader_context_);
+   // Determine access type allowed to requesting device
+   hsa_amd_memory_pool_access_t GetAccessInfo(const core::Agent& agent,
+diff --git a/src/core/runtime/amd_memory_region.cpp b/src/core/runtime/amd_memory_region.cpp
+index 4419286..63a5079 100644
+--- a/src/core/runtime/amd_memory_region.cpp
++++ b/src/core/runtime/amd_memory_region.cpp
+@@ -50,12 +50,14 @@
+ #include "core/inc/amd_gpu_agent.h"
+ #include "core/util/utils.h"
+ #include "core/inc/exceptions.h"
++#include <unistd.h>
  
+ namespace rocr {
+ namespace AMD {
+ 
+ // Tracks aggregate size of system memory available on platform
+ size_t MemoryRegion::max_sysmem_alloc_size_ = 0;
++size_t MemoryRegion::kPageSize_ = sysconf(_SC_PAGESIZE);
+ 
+ void* MemoryRegion::AllocateKfdMemory(const HsaMemFlags& flag,
+                                       HSAuint32 node_id, size_t size) {
+@@ -123,7 +125,7 @@ MemoryRegion::MemoryRegion(bool fine_grain, bool kernarg, bool full_profile, cor
+ 
+     virtual_size_ = kGpuVmSize;
+   } else if (IsSystem()) {
+-    mem_flag_.ui32.PageSize = HSA_PAGE_SIZE_4KB;
++    mem_flag_.ui32.PageSize = MemoryRegion::kPageSize_;
+     mem_flag_.ui32.NoSubstitute = 0;
+     mem_flag_.ui32.HostAccess = 1;
+     mem_flag_.ui32.CachePolicy = HSA_CACHING_CACHED;
 diff --git a/src/image/util.h b/src/image/util.h
 index 5eb9f3a..9f03d98 100644
 --- a/src/image/util.h
