@@ -170,19 +170,17 @@ build_install_rocr()
         printf "Will build and install ROCR-Runtime\n"
         if [[ "${arch}" == X86 ]]; then
                 cd ${ROCR_DIR}/src
-                mkdir -p build && cd build
-                cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_BUILD_TYPE=Release ..
         elif [[ "${arch}" == AArch64 ]]; then
-                cd ${ROCR_DIR}
+		cd ${ROCR_DIR}
                 git reset --hard HEAD
                 git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCR/ROCR_AArch64.diff
                 cd src
-                mkdir -p build && cd build
-                CC=clang CXX=clang++ cmake -DCMAKE_INSTALL_PREFIX=/opt/rocm -DCMAKE_BUILD_TYPE=Release ..
-        else
+	else
                 printf "Cannot the CPU architecture: " ${arch}
                 exit 1
         fi
+	mkdir -p build && cd build
+        cmake -DCMAKE_INSTALL_PREFIX=${ROCM_INSTALL_PATH} -DCMAKE_BUILD_TYPE=Release ..
         make
         sudo make install
 }
