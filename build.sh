@@ -187,20 +187,26 @@ build_install_rocr()
 
 build_install_roctracer()
 {
-     printf "Will build and install roctracer\n"  
-     pip install CppHeaderParser argparse 
-     cd ${roctracer_dir} 
-     git checkout test/CMakeLists.txt
-     git apply ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/test_CMakeLists.diff
- #    mkdir -p build && cd build
-     export ROCM_PATH=${ROCM_INSTALL_PATH}
-     export HIP_PATH=/opt/rocm/hip
-     export HIP_VDI=1
-     ./build.sh
- #    cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} ..
- #    make
-     cd build
-     sudo make install
+        printf "Will build and install roctracer\n"  
+        pip3 install CppHeaderParser argparse 
+        cd ${roctracer_dir} 
+        git reset --hard HEAD
+        git apply ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/test_CMakeLists.diff
+        if [[ "${arch}" == AArch64 ]]; then
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/roctracer_AArch64.diff
+                sudo cp ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/perf_timer.h ${roctracer_dir}/test/hsa/test/util
+                sudo cp ${PROJECT_DIR}/${ROCm_VER}-patch/roctracer/perf_timer.cpp ${roctracer_dir}/test/hsa/test/util
+        fi
+        #    mkdir -p build && cd build
+        export ROCM_PATH=${ROCM_INSTALL_PATH}
+        export HSA_RUNTIME_LIB_PATH=${ROCM_INSTALL_PATH}/hsa/lib
+        export HIP_PATH=/opt/rocm/hip
+        export HIP_VDI=1
+        ./build.sh
+        #    cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH} ..
+        #    make
+        cd build
+        sudo make install
 }
 
 build_install_rocprofiler()

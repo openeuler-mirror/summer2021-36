@@ -1,0 +1,24 @@
+diff --git a/cmake_modules/env.cmake b/cmake_modules/env.cmake
+index ab6c7f8..36ba771 100644
+--- a/cmake_modules/env.cmake
++++ b/cmake_modules/env.cmake
+@@ -29,8 +29,7 @@ endif ()
+ add_definitions ( -D__linux__ )
+ add_definitions ( -DUNIX_OS )
+ add_definitions ( -DLINUX )
+-add_definitions ( -D__AMD64__ )
+-add_definitions ( -D__x86_64__ )
++add_definitions ( -D__aarch64__ )
+ add_definitions ( -DAMD_INTERNAL_BUILD )
+ add_definitions ( -DLITTLEENDIAN_CPU=1 )
+ add_definitions ( -DHSA_LARGE_MODEL= )
+@@ -141,6 +140,9 @@ elseif ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" )
+   set ( NBIT 32 )
+   set ( NBITSTR "" )
+   set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" )
++elseif ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" )
++  set ( NBIT 64 )
++  set ( NBITSTR "64" )
+ endif ()
+ 
+ ## Find hsa-runtime headers/lib
