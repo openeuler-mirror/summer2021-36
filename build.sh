@@ -213,6 +213,10 @@ build_install_rocprofiler()
 {
         printf "Will build and install rocprofiler\n"       
         cd ${rocprofiler_dir}
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocprofiler/rocprofiler_AArch64.diff
+        fi
         mkdir -p build && cd build
         cmake -DCMAKE_PREFIX_PATH=${ROCM_INSTALL_PATH}include/hsa:${ROCM_INSTALL_PATH} ..
         make 
@@ -309,6 +313,10 @@ build_install_rocm_smi()
 {
         printf "Will build and install rocm_smi_lib\n"
         cd ${rocm_smi_lib_dir}
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocm_smi_lib/rocm_smi_AArch64.diff
+        fi
         mkdir -p build
         cd build
         cmake ..

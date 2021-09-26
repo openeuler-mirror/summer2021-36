@@ -1,0 +1,67 @@
+diff --git a/cmake_modules/env.cmake b/cmake_modules/env.cmake
+index b8d5ad1..e059108 100644
+--- a/cmake_modules/env.cmake
++++ b/cmake_modules/env.cmake
+@@ -29,8 +29,7 @@ endif ()
+ add_definitions ( -D__linux__ )
+ add_definitions ( -DUNIX_OS )
+ add_definitions ( -DLINUX )
+-add_definitions ( -D__AMD64__ )
+-add_definitions ( -D__x86_64__ )
++add_definitions ( -D__aarch64__ )
+ add_definitions ( -DLITTLEENDIAN_CPU=1 )
+ add_definitions ( -DHSA_LARGE_MODEL= )
+ add_definitions ( -DHSA_DEPRECATED= )
+@@ -105,6 +104,9 @@ elseif ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" )
+   set ( NBIT 32 )
+   set ( NBITSTR "" )
+   set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" )
++elseif ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" )
++  set ( NBIT 64 )
++  set ( NBITSTR "64" )
+ endif ()
+ 
+ ## Find hsa-runtime headers/lib
+diff --git a/test/util/perf_timer.cpp b/test/util/perf_timer.cpp
+index 85c490b..bf2f18a 100644
+--- a/test/util/perf_timer.cpp
++++ b/test/util/perf_timer.cpp
+@@ -22,6 +22,24 @@ THE SOFTWARE.
+ 
+ #include "util/perf_timer.h"
+ 
++#if defined(__aarch64__)
++static unsigned long long __rdtscp(unsigned int *aux)
++{
++        unsigned long long val;
++        *aux = 0;
++        /*
++        * According to ARM DDI 0487F.c, from Armv8.0 to Armv8.5 inclusive, the
++        * system counter is at least 56 bits wide; from Armv8.6, the counter
++        * must be 64 bits wide.  So the system counter could be less than 64
++        * bits wide and it is attributed with the flag 'cap_user_time_short'
++        * is true.
++        */
++        asm volatile("mrs %0, cntvct_el0" : "=r" (val));
++
++        return val;
++}
++#endif
++
+ PerfTimer::PerfTimer() { freq_in_100mhz_ = MeasureTSCFreqHz(); }
+ 
+ PerfTimer::~PerfTimer() {
+diff --git a/test/util/perf_timer.h b/test/util/perf_timer.h
+index bfd5532..20035fb 100644
+--- a/test/util/perf_timer.h
++++ b/test/util/perf_timer.h
+@@ -37,7 +37,9 @@ THE SOFTWARE.
+ #else
+ #if defined(__GNUC__)
+ #include <sys/time.h>
++#if defined(__x86_64__)
+ #include <x86intrin.h>
++#endif  // __x86_64__
+ #endif  // __GNUC__
+ #endif  // _MSC_VER
+ 
