@@ -11,3 +11,19 @@ index d102066..67d2343 100755
  # Security options
  set(CMAKE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} -Wconversion -Wcast-align ")
+diff --git a/tests/rocm_smi_test/CMakeLists.txt b/tests/rocm_smi_test/CMakeLists.txt
+index b517184..cd95496 100755
+--- a/tests/rocm_smi_test/CMakeLists.txt
++++ b/tests/rocm_smi_test/CMakeLists.txt
+@@ -156,11 +156,6 @@ endif()
+ #
+ # Extend the compiler flags for 64-bit builds
+ #
+-if (IS64BIT)
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64  -msse -msse2")
+-else()
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+-endif()
+ 
+ #
+ # Add compiler flags to include symbol information for debug builds
