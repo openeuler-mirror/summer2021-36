@@ -1,76 +1,57 @@
-/*===---- mm_malloc.h - Allocating and Freeing Aligned Memory Blocks -------===
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- *===-----------------------------------------------------------------------===
- */
+/* Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
-#ifndef __MM_MALLOC_H
-#define __MM_MALLOC_H
+   This file is part of GCC.
+
+   GCC is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   GCC is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   Under Section 7 of GPL version 3, you are granted additional
+   permissions described in the GCC Runtime Library Exception, version
+   3.1, as published by the Free Software Foundation.
+
+   You should have received a copy of the GNU General Public License and
+   a copy of the GCC Runtime Library Exception along with this program;
+   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+   <http://www.gnu.org/licenses/>.  */
+
+#ifndef _MM_MALLOC_H_INCLUDED
+#define _MM_MALLOC_H_INCLUDED
 
 #include <stdlib.h>
 
-#ifdef _WIN32
-#include <malloc.h>
-#else
+/* We can't depend on <stdlib.h> since the prototype of posix_memalign
+   may not be visible.  */
 #ifndef __cplusplus
-extern int posix_memalign(void **memptr, size_t alignment, size_t size);
+extern int posix_memalign (void **, size_t, size_t);
 #else
-// Some systems (e.g. those with GNU libc) declare posix_memalign with an
-// exception specifier. Via an "egregious workaround" in
-// Sema::CheckEquivalentExceptionSpec, Clang accepts the following as a valid
-// redeclaration of glibc's declaration.
-extern "C" int posix_memalign(void **memptr, size_t alignment, size_t size);
-#endif
+extern "C" int posix_memalign (void **, size_t, size_t) throw ();
 #endif
 
-#if !(defined(_WIN32) && defined(_mm_malloc))
-static __inline__ void *__attribute__((__always_inline__, __nodebug__,
-                                       __malloc__))
-_mm_malloc(size_t size, size_t align)
+static __inline void *
+_mm_malloc (size_t __size, size_t __alignment)
 {
-  if (align == 1) {
-    return malloc(size);
-  }
-
-  if (!(align & (align - 1)) && align < sizeof(void *))
-    align = sizeof(void *);
-
-  void *mallocedMemory;
-#if defined(__MINGW32__)
-  mallocedMemory = __mingw_aligned_malloc(size, align);
-#elif defined(_WIN32)
-  mallocedMemory = _aligned_malloc(size, align);
-#else
-  if (posix_memalign(&mallocedMemory, align, size))
-    return 0;
-#endif
-
-  return mallocedMemory;
+  void *__ptr;
+  if (__alignment == 1)
+    return malloc (__size);
+  if (__alignment == 2 || (sizeof (void *) == 8 && __alignment == 4))
+    __alignment = sizeof (void *);
+  if (posix_memalign (&__ptr, __alignment, __size) == 0)
+    return __ptr;
+  else
+    return NULL;
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
-_mm_free(void *p)
+static __inline void
+_mm_free (void *__ptr)
 {
-  free(p);
+  free (__ptr);
 }
-#endif
 
-#endif /* __MM_MALLOC_H */
-
+#endif /* _MM_MALLOC_H_INCLUDED */
