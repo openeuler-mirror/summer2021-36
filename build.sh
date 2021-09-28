@@ -46,6 +46,7 @@ download_rocm=false
 arch=
 #gpu_arch=all
 gpu_arch=gfx803
+GCC_VERSION="$( gcc --version | grep ^gcc | sed 's/^.* //g' )"
 
 # #################################################
 # helper functions
@@ -168,9 +169,14 @@ build_install_rocm_dev()
 build_install_rocr()
 {
         printf "Will build and install ROCR-Runtime\n"
+
         if [[ "${arch}" == X86 ]]; then
                 cd ${ROCR_DIR}/src
         elif [[ "${arch}" == AArch64 ]]; then
+                if [[ ! -e "/usr/lib/gcc/x86_64-linux-gnu/${GCC_VERSION}/include/mm_malloc.h" ]]; then
+                        sudo cp ${PROJECT_DIR}/${ROCm_VER}-patch/ROCR/mm_malloc.h /usr/lib/gcc/aarch64-linux-gnu/${GCC_VERSION}/include
+                fi
+
 		cd ${ROCR_DIR}
                 git reset --hard HEAD
                 git apply ${PROJECT_DIR}/${ROCm_VER}-patch/ROCR/ROCR_AArch64.diff
@@ -328,6 +334,10 @@ build_install_rocm_bw()
 {
         printf "Will build and install rocm_bandwidth_test\n"
         cd ${rocm_bandwidth_dir}
+        if [[ "${arch}" == AArch64 ]]; then
+                git reset --hard HEAD
+                git apply ${PROJECT_DIR}/${ROCm_VER}-patch/rocm_bandwidth_test/rocm_bw_AArch64.diff
+        fi
         mkdir -p build
         cd build
         cmake ..
