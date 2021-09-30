@@ -1,0 +1,69 @@
+diff --git a/bin/hip_embed_pch.sh b/bin/hip_embed_pch.sh
+index c77d0847..1124a63c 100755
+--- a/bin/hip_embed_pch.sh
++++ b/bin/hip_embed_pch.sh
+@@ -69,7 +69,7 @@ $LLVM_DIR/bin/clang -O3 --rocm-path=$HIP_INC_DIR/.. -std=c++17 -nogpulib -isyste
+ 
+ cat $tmp/hip_macros.h >> $tmp/pch.cui &&
+ 
+-$LLVM_DIR/bin/clang -cc1 -O3 -emit-pch -triple amdgcn-amd-amdhsa -aux-triple x86_64-unknown-linux-gnu -fcuda-is-device -std=c++17 -fgnuc-version=4.2.1 -o $tmp/hip.pch -x hip-cpp-output - <$tmp/pch.cui &&
++$LLVM_DIR/bin/clang -cc1 -O3 -emit-pch -triple amdgcn-amd-amdhsa -aux-triple aarch64-unknown-linux-gnu -fcuda-is-device -std=c++17 -fgnuc-version=4.2.1 -o $tmp/hip.pch -x hip-cpp-output - <$tmp/pch.cui &&
+ 
+ $LLVM_DIR/bin/llvm-mc -o hip_pch.o $tmp/hip_pch.mcin --filetype=obj &&
+ 
+diff --git a/bin/hipcc b/bin/hipcc
+index 41f43da0..0337ca75 100755
+--- a/bin/hipcc
++++ b/bin/hipcc
+@@ -698,7 +698,7 @@ if ($HIP_PLATFORM eq "amd") {
+         $toolArgs .= " -Wl,--enable-new-dtags -Wl,--rpath=$HIP_LIB_PATH:$ROCM_PATH/lib -lamdhip64 ";
+       }
+       # To support __fp16 and _Float16, explicitly link with compiler-rt
+-      $toolArgs .= " -L$HIP_CLANG_PATH/../lib/clang/$HIP_CLANG_VERSION/lib/linux -lclang_rt.builtins-x86_64 "
++      $toolArgs .= " -L$HIP_CLANG_PATH/../lib/clang/$HIP_CLANG_VERSION/lib/linux -lclang_rt.builtins-aarch64 "
+     }
+ }
+ 
+diff --git a/hip-config.cmake.in b/hip-config.cmake.in
+index e6962268..f707bd19 100755
+--- a/hip-config.cmake.in
++++ b/hip-config.cmake.in
+@@ -266,10 +266,10 @@ if(HIP_COMPILER STREQUAL "clang")
+ 
+   # Add support for __fp16 and _Float16, explicitly link with compiler-rt
+   set_property(TARGET hip::host APPEND PROPERTY
+-    INTERFACE_LINK_LIBRARIES "-L\"${HIP_CLANG_INCLUDE_PATH}/../lib/linux\" -lclang_rt.builtins-x86_64"
++    INTERFACE_LINK_LIBRARIES "-L\"${HIP_CLANG_INCLUDE_PATH}/../lib/linux\" -lclang_rt.builtins-aarch64"
+   )
+   set_property(TARGET hip::device APPEND PROPERTY
+-    INTERFACE_LINK_LIBRARIES "-L\"${HIP_CLANG_INCLUDE_PATH}/../lib/linux\" -lclang_rt.builtins-x86_64"
++    INTERFACE_LINK_LIBRARIES "-L\"${HIP_CLANG_INCLUDE_PATH}/../lib/linux\" -lclang_rt.builtins-aarch64"
+   )
+ endif()
+ 
+diff --git a/hip-lang-config.cmake.in b/hip-lang-config.cmake.in
+index 9d3c9cc2..cd4579f9 100644
+--- a/hip-lang-config.cmake.in
++++ b/hip-lang-config.cmake.in
+@@ -124,7 +124,7 @@ set_property(TARGET hip-lang::device APPEND PROPERTY
+ 
+ # Add support for __fp16 and _Float16, explicitly link with compiler-rt
+ set_property(TARGET hip-lang::device APPEND PROPERTY
+-  INTERFACE_LINK_LIBRARIES "$<$<LINK_LANGUAGE:HIP>:${HIP_CLANG_INCLUDE_PATH}/lib/linux/libclang_rt.builtins-x86_64.a>"
++  INTERFACE_LINK_LIBRARIES "$<$<LINK_LANGUAGE:HIP>:${HIP_CLANG_INCLUDE_PATH}/lib/linux/libclang_rt.builtins-aarch64.a>"
+ )
+ 
+ # Approved by CMake to use this name. This is used so that HIP can
+diff --git a/rocclr/CMakeLists.txt b/rocclr/CMakeLists.txt
+index 63229359..5db59377 100755
+--- a/rocclr/CMakeLists.txt
++++ b/rocclr/CMakeLists.txt
+@@ -43,7 +43,7 @@ set(CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/hip)
+ 
+ find_package(PythonInterp REQUIRED)
+ 
+-add_definitions( -D__HIP_PLATFORM_AMD__ -DLINUX -D__x86_64__ -D__AMD64__ -DUNIX_OS -DqLittleEndian -DOPENCL_MAJOR=2 -DOPENCL_MINOR=0 -DCL_TARGET_OPENCL_VERSION=220 -DWITH_AQL -DWITH_ONLINE_COMPILER -DATI_OS_LINUX -DATI_ARCH_X86 -DLITTLEENDIAN_CPU -DATI_BITS_64 -DATI_COMP_GCC -DWITH_HSA_DEVICE -DWITH_TARGET_AMDGCN -DOPENCL_EXPORTS -DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS -DVEGA10_ONLY=false -DWITH_LIGHTNING_COMPILER -DUSE_PROF_API)
++add_definitions( -D__HIP_PLATFORM_AMD__ -DLINUX -D__aarch64__ -DUNIX_OS -DqLittleEndian -DOPENCL_MAJOR=2 -DOPENCL_MINOR=0 -DCL_TARGET_OPENCL_VERSION=220 -DWITH_AQL -DWITH_ONLINE_COMPILER -DATI_OS_LINUX -DATI_ARCH_ARM -DLITTLEENDIAN_CPU -DATI_BITS_64 -DATI_COMP_GCC -DWITH_HSA_DEVICE -DWITH_TARGET_AMDGCN -DOPENCL_EXPORTS -DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS -DVEGA10_ONLY=false -DWITH_LIGHTNING_COMPILER -DUSE_PROF_API)
+ 
+ if(CMAKE_BUILD_TYPE MATCHES "^Debug$")
+   add_definitions(-DDEBUG)
