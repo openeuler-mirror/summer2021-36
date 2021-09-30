@@ -8,10 +8,12 @@ kfdtest_dir=${PROJECT_DIR}/ROCm/ROCT-Thunk-Interface/tests/kfdtest
 rocm_smi_test_dir=${PROJECT_DIR}/ROCm/rocm_smi_lib/tests/rocm_smi_test
 rocm_bw_test_dir=${PROJECT_DIR}/ROCm/rocm_bandwidth_test
 hip_test_dir=${PROJECT_DIR}/ROCm/HIP-Examples
+rocblas_test_dir=${PROJECT_DIR}/ROCm/rocBLAS/build/release/clients/staging
 kfdtest=false
 rocm_smi_test=false
 rocm_bw_test=false
 hiptest=false
+rocblas_test=false
 cudatest=false
 all=false
 
@@ -30,6 +32,7 @@ Test helper script
       --rocm_smi_test            Test rocm smi lib
       --rocm_bw_test             Test rocm bandwidth
       --hiptest                  Test HIP
+      --rocblas_test             Test rocBLAS
       --cudatest                 Test CUDA
 EOF
 }
@@ -77,6 +80,13 @@ function func_hiptest()
     ./test_all.sh
 }
 
+function func_rocblas_test()
+{
+    printf "Will test rocBLAS\n"
+    cd ${rocblas_test_dir}
+    ./rocblas-test --gtest_filter=*quick*
+}
+
 function func_cudatest()
 {
     printf "Will test CUDA\n"
@@ -88,7 +98,7 @@ function func_cudatest()
 
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,kfdtest,rocm_smi_test,rocm_bw_test,hiptest,cudatest --options ha -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,all,kfdtest,rocm_smi_test,rocm_bw_test,hiptest,rocblas_test,cudatest --options ha -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -121,6 +131,9 @@ while true; do
         shift ;;
     --hiptest)
         hiptest=true
+        shift ;;
+    --rocblas_test)
+        rocblas_test=true
         shift ;;
     --cudatest)
         cudatest=true
@@ -158,6 +171,10 @@ fi
 
 if [[ "${hiptest}" == true ]]; then
     func_hiptest
+fi
+
+if [[ "${rocblas_test}" == true ]]; then
+    func_rocblas_test
 fi
 
 if [[ "${cudatest}" == true ]]; then
