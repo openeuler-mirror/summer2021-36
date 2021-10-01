@@ -19,7 +19,7 @@ Linux kernel build & installation helper script
   $0 <options>
       -h | --help                Print this help message
       -d | --download            Download openEuler kernel
-      --arch                     Set specific architecture (x86_64 or ARM64, default x86_64)
+      --arch                     Set specific architecture (x86_64, ARM64 or Phytium, default x86_64)
       -v | --kernel-version      Set specific rocm version to build (4.19 or 5.10, default 5.10)
 EOF
 }
@@ -94,12 +94,10 @@ echo ${arch}
 ls ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config
 EOF
 
-git checkout ${KERNEL_BRANCH}
+git pull
 make mrproper
 cp ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config .config
-if [[ "${arch}" == ARM64 ]]; then
-    git apply ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/kfd_${arch}.diff
-fi
+
 cpus=`grep '^processor' /proc/cpuinfo | sort -u | wc -l`
 make -j${cpus}
 sudo make modules_install
