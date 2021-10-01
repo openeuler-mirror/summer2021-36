@@ -377,6 +377,44 @@ sudo make install
 sudo make package    //编译出rpm包
 ```
 
+# 安装教程 Phytium(aarch64)
+在Phytium(aarch64)平台下需要修改从内核到应用层的多处代码。本项目的自动编译脚本会自动打上提供的aarch64补丁，因此，本项目建议直接采用本项目提供的自动化脚本编译安装。另外，由于Phytium平台的PCI-E桥不支持PCI-E Atomic Operation操作，因此，部分ROCm功能无法提供。本项目给出完整的编译方案，但仅给出提供支持运行的测试项。
+## 1. 使用本项目提供的脚本自动下载、编译、安装
+本项目提供完整的下载、编译、安装的自动化编译脚本，具体使用方法如下：
+
++ **Step 0. 获取本项目**
+```
+git clone https://gitlab.summer-ospp.ac.cn/summer2021/210010058 或者 
+git clone https://gitee.com/openeuler-competition/summer2021-36
+cd summer2021-36
+```
++ **Step 1. 下载、编译、安装内核**
+```
+./build_kernel.sh --arch Phytium
+```
+
++ **Step 2. 依照顺序下载、编译、安装ROCm**
+```
+./build.sh -d -v rocm-4.3.0
+./build.sh --roct -v rocm-4.3.0
+./build.sh --llvm -v rocm-4.3.0
+./build.sh --rocm_dev -v rocm-4.3.0
+./build.sh --rocr -v rocm-4.3.0
+./build.sh --rocm_cs -v rocm-4.3.0
+./build.sh --rocm_cmake -v rocm-4.3.0
+./build.sh --rocclr -v rocm-4.3.0
+./build.sh --rocminfo -v rocm-4.3.0
+./build.sh --rocm_smi -v rocm-4.3.0
+./build.sh --hip -v rocm-4.3.0
+
+```
+<font color="red">注意，目前HIP在openEuler上依然存在问题(主要是gcc引起的BUG，本项目无法解决)，请查找到/usr/include/c++/7.3.0/iostream，注释掉其中的static ios_base::Init __ioinit。事实上，本项目并不建议这么做，尽管HIPCC可以正常编译，但会造成更多问题。因此HIP后面的代码包，本项目不再提供编译。</font>
+
++ **Step 3. 测试ROCm**
+```
+./test.sh --rocm_smi_test
+```
+
 # 单元测试
 用于测试软件包移植的正确性。单元测试均为官方单元测试。
 
