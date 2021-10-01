@@ -94,6 +94,7 @@ echo ${arch}
 ls ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config
 EOF
 
+git checkout -b ${KERNEL_BRANCH}
 git pull
 make mrproper
 cp ${PROJECT_DIR}/kernel-patch/${KERNEL_VER}/ROCm_kernel_${arch}.config .config
